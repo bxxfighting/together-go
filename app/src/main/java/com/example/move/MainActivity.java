@@ -40,6 +40,10 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
     private double latitude = 0;
     private double altitude;
     private float accuracy;
+    private int direct = 0;
+    private double speed = 0.00001;
+    private int step = 1000;
+    private int count = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -100,6 +104,10 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
         return min + ((max - min) * random.nextDouble());
     }
 
+    private int genInt(final int min, final int max) {
+        return random.nextInt(max) % (max-min+1) + min;
+    }
+
     private void setLocation(double longitude, double latitude) {
 
         altitude = genDouble(38.0, 50.5);
@@ -125,12 +133,31 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
             public void run() {
                 while (true) {
                     try {
-                        Thread.sleep(500);
+                        Thread.sleep(300);
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
+                    switch (direct % 4) {
+                        case 0:
+                            latitude += speed;
+                            break;
+                        case 1:
+                            longitude += speed;
+                            break;
+                        case 2:
+                            latitude -= speed;
+                            break;
+                        case 3:
+                            longitude -= speed;
+                            break;
+                    }
                     setLocation(longitude, latitude);
-                    longitude += 0.00005;
+                    count += 1;
+                    if (count % step == 0) {
+                        direct += 1;
+                        step = genInt(1000, 5000);
+                        speed = genDouble(0.000005, 0.00003);
+                    }
                 }
             }
         });

@@ -18,4 +18,5 @@
 1. 模拟定位，控制方向和速度
 
 # 演示效果
+> 点击下载演示视频，查看使用效果  
 [![演示效果](https://github.com/bxxfighting/together-go/blob/master/data/封面.png)](https://github.com/bxxfighting/together-go/blob/master/data/演示.mp4)

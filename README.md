@@ -16,3 +16,7 @@
 
 # 已完成功能
 1. 模拟定位，控制方向和速度
+
+# 演示效果
+<video src="https://github.com/bxxfighting/together-go/blob/master/data/演示.mp4" width="320" height="180" controls="controls">
+</video>

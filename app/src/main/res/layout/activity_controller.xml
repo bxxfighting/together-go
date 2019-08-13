@@ -1,21 +1,25 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    android:orientation="vertical" android:layout_width="match_parent"
-android:layout_height="match_parent">
+    android:orientation="vertical" android:layout_width="wrap_content"
+android:layout_height="wrap_content">
 
     <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content">
 
-        <Space
-            android:layout_width="67dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1" />
-
         <Button
-            android:layout_width="66dp"
-            android:layout_height="66dp"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:background="#4DFFFFFF"
+            android:onClick="onClickBack"
+            android:id="@+id/backButton"
+            android:text="收"
+            android:visibility="visible"
+            tools:visibility="visible" />
+        <Button
+            android:layout_width="50dp"
+            android:layout_height="50dp"
             android:background="#4DFFFFFF"
             android:onClick="onClickNorth"
             android:text="北"
@@ -27,8 +31,8 @@ android:layout_height="match_parent">
         android:layout_height="wrap_content">
 
         <Button
-            android:layout_width="66dp"
-            android:layout_height="66dp"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
             android:background="#4DFFFFFF"
             android:onClick="onClickWest"
             android:text="西"
@@ -36,17 +40,18 @@ android:layout_height="match_parent">
             tools:visibility="visible" />
 
         <Button
-            android:layout_width="66dp"
-            android:layout_height="66dp"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
             android:background="#4DFFFFFF"
             android:onClick="onClickOnOff"
-            android:text="开关"
+            android:id="@+id/stopButton"
+            android:text="走"
             android:visibility="visible"
             tools:visibility="visible" />
 
         <Button
-            android:layout_width="66dp"
-            android:layout_height="66dp"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
             android:background="#4DFFFFFF"
             android:onClick="onClickEast"
             android:text="东"
@@ -58,13 +63,13 @@ android:layout_height="match_parent">
         android:layout_height="wrap_content">
 
         <Space
-            android:layout_width="67dp"
+            android:layout_width="51dp"
             android:layout_height="wrap_content"
             android:layout_weight="1" />
 
         <Button
-            android:layout_width="66dp"
-            android:layout_height="66dp"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
             android:background="#4DFFFFFF"
             android:onClick="onClickSouth"
             android:text="南"
@@ -78,7 +83,7 @@ android:layout_height="match_parent">
 
         <SeekBar
             android:id="@+id/speedSeekBar"
-            android:layout_width="200dp"
+            android:layout_width="150dp"
             android:layout_height="20dp" />
     </LinearLayout>
 

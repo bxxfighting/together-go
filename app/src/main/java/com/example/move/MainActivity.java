@@ -17,6 +17,7 @@ import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.WindowManager;
+import android.widget.Button;
 import android.widget.SeekBar;
 
 import com.tencent.map.geolocation.TencentLocation;
@@ -51,11 +52,14 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
     private double altitude;
     private float accuracy;
     private int direct = 0;
-    private double baseSpeed = 0.00001;
-    private double speed = 0.00001;
+    private double baseSpeed = 0.000002;
+    private double speed = 0.000002;
     private int step = 1000;
     private int count = 0;
     private SeekBar speedSeekBar;
+    private Button stopButton;
+    private int isBack = 0;
+    private Button backButton;
 
     private WindowManager windowManager;
     private WindowManager.LayoutParams layoutParams;
@@ -115,12 +119,12 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
         layoutParams.format = PixelFormat.RGBA_8888;
         layoutParams.flags = WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE;
         layoutParams.gravity = Gravity.START | Gravity.TOP;
-        layoutParams.width = 600;
-        layoutParams.height = 600;
+        layoutParams.width = 400;
+        layoutParams.height = 420;
         DisplayMetrics metrics = new DisplayMetrics();
         windowManager.getDefaultDisplay().getMetrics(metrics);
-        layoutParams.x = metrics.widthPixels - 10;
-        layoutParams.y = metrics.heightPixels / 2;
+        layoutParams.x = metrics.widthPixels;
+        layoutParams.y = metrics.heightPixels / 2 - 50 * 3 / 2;
     }
 
     private void showController() {
@@ -128,6 +132,8 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
             LayoutInflater layoutInflater = LayoutInflater.from(this);
             controllerView = layoutInflater.inflate(R.layout.activity_controller, null);
 
+            stopButton = (Button) controllerView.findViewById(R.id.stopButton);
+            backButton = (Button) controllerView.findViewById(R.id.backButton);
             speedSeekBar = (SeekBar) controllerView.findViewById(R.id.speedSeekBar);
             speedSeekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
                 @Override
@@ -150,6 +156,18 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
         }
     }
 
+    public void onClickBack(View view) {
+        isBack += 1;
+        if (isBack % 2 == 1) {
+            layoutParams.width = 100;
+            windowManager.updateViewLayout(controllerView, layoutParams);
+            backButton.setText("开");
+        } else {
+            layoutParams.width = 400;
+            windowManager.updateViewLayout(controllerView, layoutParams);
+            backButton.setText("收");
+        }
+    }
     public void onClickNorth(View view) {
         direct = 0;
     }
@@ -164,12 +182,10 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
     }
     public void onClickOnOff(View view) {
         isRun += 1;
-        Log.i("isRun", String.valueOf(isRun));
-        if (isRun % 2 == 1) {
-
-            synchronized (lock) {
-                lock.notifyAll();
-            }
+        if (isRun % 2 == 0) {
+            stopButton.setText("走");
+        } else {
+            stopButton.setText("停");
         }
     }
 
@@ -229,27 +245,26 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
             @Override
             public void run() {
                 while (true) {
-                    while (isRun % 2 == 0) {
-                        stopLocation();
-                    }
                     try {
-                        Thread.sleep(300);
+                        Thread.sleep(10);
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
-                    switch (direct % 4) {
-                        case 0:
-                            latitude += speed;
-                            break;
-                        case 1:
-                            longitude += speed;
-                            break;
-                        case 2:
-                            latitude -= speed;
-                            break;
-                        case 3:
-                            longitude -= speed;
-                            break;
+                    if (isRun % 2 == 1) {
+                        switch (direct % 4) {
+                            case 0:
+                                latitude += speed;
+                                break;
+                            case 1:
+                                longitude += speed;
+                                break;
+                            case 2:
+                                latitude -= speed;
+                                break;
+                            case 3:
+                                longitude -= speed;
+                                break;
+                        }
                     }
                     setLocation(longitude, latitude);
                 }

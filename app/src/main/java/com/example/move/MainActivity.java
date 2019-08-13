@@ -252,12 +252,6 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
                             break;
                     }
                     setLocation(longitude, latitude);
-                    count += 1;
-                    if (count % step == 0) {
-                        direct += 1;
-                        step = genInt(1000, 5000);
-                        speed = genDouble(0.000005, 0.00003);
-                    }
                 }
             }
         });

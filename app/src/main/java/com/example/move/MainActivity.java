@@ -4,12 +4,19 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.PixelFormat;
 import android.location.Location;
 import android.location.LocationManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.SystemClock;
+import android.provider.Settings;
+import android.util.DisplayMetrics;
 import android.util.Log;
+import android.view.Gravity;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.WindowManager;
 
 import com.tencent.map.geolocation.TencentLocation;
 import com.tencent.map.geolocation.TencentLocationListener;
@@ -36,6 +43,8 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
     private Random random;
     private LocationManager locationManager;
     private Thread thread;
+    private int isRun = 1;
+    private final Object lock = new Object();
     private double longitude = 0;
     private double latitude = 0;
     private double altitude;
@@ -45,6 +54,10 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
     private int step = 1000;
     private int count = 0;
 
+    private WindowManager windowManager;
+    private WindowManager.LayoutParams layoutParams;
+    private View controllerView;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -53,12 +66,14 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
         mapView.onCreate(savedInstanceState);
         init();
         continueLocation();
+        showController();
     }
 
     private void init() {
         initMap();
         initLocation();
         initMoveManager();
+        initController();
     }
 
     private void initMap() {
@@ -84,6 +99,56 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
                 true, false, false, true,
                 true, true, 0, 5);
         locationManager.setTestProviderEnabled(LocationManager.GPS_PROVIDER, true);
+    }
+
+    private void initController() {
+        windowManager = (WindowManager) getSystemService(WINDOW_SERVICE);
+        layoutParams = new WindowManager.LayoutParams();
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            layoutParams.type = WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY;
+        } else {
+            layoutParams.type = WindowManager.LayoutParams.TYPE_PHONE;
+        }
+        layoutParams.format = PixelFormat.RGBA_8888;
+        layoutParams.flags = WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE;
+        layoutParams.gravity = Gravity.START | Gravity.TOP;
+        layoutParams.width = 600;
+        layoutParams.height = 500;
+        DisplayMetrics metrics = new DisplayMetrics();
+        windowManager.getDefaultDisplay().getMetrics(metrics);
+        layoutParams.x = metrics.widthPixels - 10;
+        layoutParams.y = metrics.heightPixels / 2;
+    }
+
+    private void showController() {
+        if (Settings.canDrawOverlays(this)) {
+            LayoutInflater layoutInflater = LayoutInflater.from(this);
+            controllerView = layoutInflater.inflate(R.layout.activity_controller, null);
+            windowManager.addView(controllerView, layoutParams);
+        }
+    }
+
+    public void onClickNorth(View view) {
+        direct = 0;
+    }
+    public void onClickEast(View view) {
+        direct = 1;
+    }
+    public void onClickSouth(View view) {
+        direct = 2;
+    }
+    public void onClickWest(View view) {
+        direct = 3;
+    }
+    public void onClickOnOff(View view) {
+        isRun += 1;
+        Log.i("isRun", String.valueOf(isRun));
+        if (isRun % 2 == 1) {
+
+            synchronized (lock) {
+                lock.notifyAll();
+            }
+        }
     }
 
     @Override
@@ -127,11 +192,24 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
         locationManager.setTestProviderLocation(LocationManager.GPS_PROVIDER, location);
     }
 
+    public void stopLocation() {
+        synchronized (lock) {
+            try {
+                lock.wait();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
     public void continueLocation() {
         thread = new Thread(new Runnable() {
             @Override
             public void run() {
                 while (true) {
+                    while (isRun % 2 == 0) {
+                        stopLocation();
+                    }
                     try {
                         Thread.sleep(300);
                     } catch (InterruptedException e) {

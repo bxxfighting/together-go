@@ -3,7 +3,6 @@ package com.example.move;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.Context;
-import android.content.Intent;
 import android.graphics.PixelFormat;
 import android.location.Location;
 import android.location.LocationManager;
@@ -12,7 +11,6 @@ import android.os.Bundle;
 import android.os.SystemClock;
 import android.provider.Settings;
 import android.util.DisplayMetrics;
-import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -29,9 +27,8 @@ import com.tencent.tencentmap.mapsdk.map.MapView;
 import com.tencent.tencentmap.mapsdk.map.TencentMap;
 import com.tencent.tencentmap.mapsdk.map.UiSettings;
 
-import com.example.move.service.MoveService;
-
 import java.util.Random;
+
 
 public class MainActivity extends AppCompatActivity implements TencentLocationListener {
 
@@ -39,7 +36,6 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
     TencentMap tencentMap = null;
     TencentLocationManager tencentLocationManager;
     TencentLocationRequest tencentLocationRequest;
-    TencentLocationListener tencentLocationListener;
 
 
     private Random random;
@@ -54,8 +50,6 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
     private int direct = 0;
     private double baseSpeed = 0.000002;
     private double speed = 0.000002;
-    private int step = 1000;
-    private int count = 0;
     private SeekBar speedSeekBar;
     private Button stopButton;
     private int isBack = 0;
@@ -83,6 +77,7 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
         initController();
     }
 
+    // 初始化腾讯地图的一些信息
     private void initMap() {
         tencentMap = mapView.getMap();
         tencentMap.setZoom(20);
@@ -91,6 +86,7 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
         uiSettings.setScrollGesturesEnabled(false);
     }
 
+    // 初始化腾讯定位的一些信息
     private void initLocation() {
         tencentLocationManager = TencentLocationManager.getInstance(this);
         tencentLocationManager.setCoordinateType(TencentLocationManager.COORDINATE_TYPE_WGS84);
@@ -99,6 +95,7 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
         int error = tencentLocationManager.requestLocationUpdates(tencentLocationRequest, this);
     }
 
+    // 初始化模拟定位的一些信息
     private void initMoveManager() {
         random = new Random();
         locationManager = (LocationManager)getSystemService(Context.LOCATION_SERVICE);
@@ -108,6 +105,7 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
         locationManager.setTestProviderEnabled(LocationManager.GPS_PROVIDER, true);
     }
 
+    // 这里主要是设置悬浮窗的一些配置
     private void initController() {
         windowManager = (WindowManager) getSystemService(WINDOW_SERVICE);
         layoutParams = new WindowManager.LayoutParams();
@@ -119,21 +117,26 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
         layoutParams.format = PixelFormat.RGBA_8888;
         layoutParams.flags = WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE;
         layoutParams.gravity = Gravity.START | Gravity.TOP;
+        // 这是悬浮窗的宽高
         layoutParams.width = 400;
         layoutParams.height = 420;
         DisplayMetrics metrics = new DisplayMetrics();
         windowManager.getDefaultDisplay().getMetrics(metrics);
+        // 这是悬浮窗处于屏幕的位置
         layoutParams.x = metrics.widthPixels;
         layoutParams.y = metrics.heightPixels / 2 - 50 * 3 / 2;
     }
 
     private void showController() {
         if (Settings.canDrawOverlays(this)) {
+            // 这就是去获取activity_controller，这样才能用它里面的元素
             LayoutInflater layoutInflater = LayoutInflater.from(this);
             controllerView = layoutInflater.inflate(R.layout.activity_controller, null);
-
             stopButton = (Button) controllerView.findViewById(R.id.stopButton);
             backButton = (Button) controllerView.findViewById(R.id.backButton);
+
+            // 这里是控制移动速度的，有一个基础速度，然后根据速度条的位置增加相应的速度值
+            // 因为这里调用了其它layout内的元素，所以需要用LayoutInflater获取到对应的layout再操作
             speedSeekBar = (SeekBar) controllerView.findViewById(R.id.speedSeekBar);
             speedSeekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
                 @Override
@@ -156,6 +159,8 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
         }
     }
 
+    // 控制面板是展开还是收回的方法，由backButton调用
+    // 主要就是重新设置悬浮窗的宽度，然后更新悬浮窗
     public void onClickBack(View view) {
         isBack += 1;
         if (isBack % 2 == 1) {
@@ -168,6 +173,7 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
             backButton.setText("收");
         }
     }
+    // 以下四个方法就是控制东南西北的，分别由不同方向按钮调用
     public void onClickNorth(View view) {
         direct = 0;
     }
@@ -180,6 +186,7 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
     public void onClickWest(View view) {
         direct = 3;
     }
+    // 控制走与停的方法，由stopButton调用
     public void onClickOnOff(View view) {
         isRun += 1;
         if (isRun % 2 == 0) {
@@ -189,6 +196,8 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
         }
     }
 
+    // 这里tencent定位监听的回调，只要位置发生变化，就会调用此方法
+    // 我这里就是让定位获取的坐标始终位于地图中央
     @Override
     public void onLocationChanged(TencentLocation location, int error, String reason) {
         if (latitude == 0 && longitude == 0) {
@@ -203,19 +212,24 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
 
     }
 
+    // 生成一个区间的浮点数
     private double genDouble(final double min, final double max) {
         return min + ((max - min) * random.nextDouble());
     }
 
+    // 生成一个区间的整数
     private int genInt(final int min, final int max) {
         return random.nextInt(max) % (max-min+1) + min;
     }
 
     private void setLocation(double longitude, double latitude) {
 
+        // 因为我是在北京的，我把这个海拔设置了一个符合北京的范围，随机生成
         altitude = genDouble(38.0, 50.5);
+        // 而定位有精度，GPS精度一般小于15米，我设置在1到15米之间随机
         accuracy = (float)genDouble(1.0, 15.0);
 
+        // 下面就是自己设置定位的位置了
         Location location = new Location(LocationManager.GPS_PROVIDER);
         location.setTime(System.currentTimeMillis());
         location.setLatitude(latitude);
@@ -230,27 +244,26 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
         locationManager.setTestProviderLocation(LocationManager.GPS_PROVIDER, location);
     }
 
-    public void stopLocation() {
-        synchronized (lock) {
-            try {
-                lock.wait();
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        }
-    }
-
+    // 持续定位
     public void continueLocation() {
         thread = new Thread(new Runnable() {
             @Override
             public void run() {
                 while (true) {
                     try {
+                        // 这里是一个死循环，但是我们不可以直接不停的设置定位，那样会把手机卡死
+                        // 因此我们这里需要设置两次设置定位的间隔, 但是这个值又不能设置大了，
+                        // 因为，两次定位之间间隔长了，在这个时间窗口有其它程序调用定位功能，就会获取到你真实的位置
+                        // 从而导致，位置出现跳跃的现象，我这里设置10毫秒
                         Thread.sleep(10);
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
+                    // isRun是来判断我们是不是要停下来，记住，这里停下来的概念是，你的位置坐标不变的意思，
+                    // 因此，要达到这个效果，并不是要把线程停下来，而是要不停的给设置同一位置坐标
                     if (isRun % 2 == 1) {
+                        // 这里设置四个方向，北：0、东：1、南：2、西：3
+                        // 改变了方向就改变经纬度的变化策略
                         switch (direct % 4) {
                             case 0:
                                 latitude += speed;

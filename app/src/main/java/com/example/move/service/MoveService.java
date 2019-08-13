@@ -14,6 +14,7 @@ import androidx.annotation.Nullable;
 
 import java.util.Random;
 
+// 先别看这个，没啥用，原本是想把模拟定位的相关内容移到这的
 public class MoveService extends Service {
     public static final String TAG = "MoveService";
     private LocationManager locationManager;

@@ -17,6 +17,9 @@
 # 已完成功能
 1. 模拟定位，控制方向和速度
 
+# 备注
+本项目谨供学习交流使用，严禁用于任何商业目的，或破坏游戏环境及平衡等行为，如造成任何损失，请自行承担后果
+
 # 演示效果
 > 点击下载演示视频，查看使用效果  
 [![演示效果](https://github.com/bxxfighting/together-go/blob/master/data/封面.png)](https://github.com/bxxfighting/together-go/blob/master/data/演示.mp4)

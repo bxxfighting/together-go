@@ -71,4 +71,15 @@ android:layout_height="match_parent">
             android:visibility="visible"
             tools:visibility="visible" />
     </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content">
+
+        <SeekBar
+            android:id="@+id/speedSeekBar"
+            android:layout_width="200dp"
+            android:layout_height="20dp" />
+    </LinearLayout>
+
 </LinearLayout>

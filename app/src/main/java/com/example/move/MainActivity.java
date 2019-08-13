@@ -17,6 +17,7 @@ import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.WindowManager;
+import android.widget.SeekBar;
 
 import com.tencent.map.geolocation.TencentLocation;
 import com.tencent.map.geolocation.TencentLocationListener;
@@ -43,16 +44,18 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
     private Random random;
     private LocationManager locationManager;
     private Thread thread;
-    private int isRun = 1;
+    private int isRun = 0;
     private final Object lock = new Object();
     private double longitude = 0;
     private double latitude = 0;
     private double altitude;
     private float accuracy;
     private int direct = 0;
+    private double baseSpeed = 0.00001;
     private double speed = 0.00001;
     private int step = 1000;
     private int count = 0;
+    private SeekBar speedSeekBar;
 
     private WindowManager windowManager;
     private WindowManager.LayoutParams layoutParams;
@@ -113,7 +116,7 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
         layoutParams.flags = WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE;
         layoutParams.gravity = Gravity.START | Gravity.TOP;
         layoutParams.width = 600;
-        layoutParams.height = 500;
+        layoutParams.height = 600;
         DisplayMetrics metrics = new DisplayMetrics();
         windowManager.getDefaultDisplay().getMetrics(metrics);
         layoutParams.x = metrics.widthPixels - 10;
@@ -124,6 +127,25 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
         if (Settings.canDrawOverlays(this)) {
             LayoutInflater layoutInflater = LayoutInflater.from(this);
             controllerView = layoutInflater.inflate(R.layout.activity_controller, null);
+
+            speedSeekBar = (SeekBar) controllerView.findViewById(R.id.speedSeekBar);
+            speedSeekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+                @Override
+                public void onProgressChanged(SeekBar seekBar, int i, boolean b) {
+                    speed = baseSpeed + baseSpeed * (i / 10);
+                }
+
+                @Override
+                public void onStartTrackingTouch(SeekBar seekBar) {
+
+                }
+
+                @Override
+                public void onStopTrackingTouch(SeekBar seekBar) {
+
+                }
+            });
+
             windowManager.addView(controllerView, layoutParams);
         }
     }

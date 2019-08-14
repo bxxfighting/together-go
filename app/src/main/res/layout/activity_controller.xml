@@ -11,7 +11,7 @@ android:layout_height="wrap_content">
         <Button
             android:layout_width="50dp"
             android:layout_height="50dp"
-            android:background="#4DFFFFFF"
+            android:background="#8DFFFFFF"
             android:onClick="onClickBack"
             android:id="@+id/backButton"
             android:text="收"
@@ -20,8 +20,9 @@ android:layout_height="wrap_content">
         <Button
             android:layout_width="50dp"
             android:layout_height="50dp"
-            android:background="#4DFFFFFF"
+            android:background="#8DFFFFFF"
             android:onClick="onClickNorth"
+            android:id="@+id/northButton"
             android:text="北"
             android:visibility="visible"
             tools:visibility="visible" />
@@ -33,8 +34,9 @@ android:layout_height="wrap_content">
         <Button
             android:layout_width="50dp"
             android:layout_height="50dp"
-            android:background="#4DFFFFFF"
+            android:background="#8DFFFFFF"
             android:onClick="onClickWest"
+            android:id="@+id/westButton"
             android:text="西"
             android:visibility="visible"
             tools:visibility="visible" />
@@ -42,7 +44,7 @@ android:layout_height="wrap_content">
         <Button
             android:layout_width="50dp"
             android:layout_height="50dp"
-            android:background="#4DFFFFFF"
+            android:background="#8DFFFFFF"
             android:onClick="onClickOnOff"
             android:id="@+id/stopButton"
             android:text="走"
@@ -52,8 +54,9 @@ android:layout_height="wrap_content">
         <Button
             android:layout_width="50dp"
             android:layout_height="50dp"
-            android:background="#4DFFFFFF"
+            android:background="#8DFFFFFF"
             android:onClick="onClickEast"
+            android:id="@+id/eastButton"
             android:text="东"
             android:visibility="visible"
             tools:visibility="visible" />
@@ -70,8 +73,9 @@ android:layout_height="wrap_content">
         <Button
             android:layout_width="50dp"
             android:layout_height="50dp"
-            android:background="#4DFFFFFF"
+            android:background="#8DFFFFFF"
             android:onClick="onClickSouth"
+            android:id="@+id/southButton"
             android:text="南"
             android:visibility="visible"
             tools:visibility="visible" />

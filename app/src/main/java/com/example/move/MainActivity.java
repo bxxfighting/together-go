@@ -48,10 +48,14 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
     private double altitude;
     private float accuracy;
     private int direct = 0;
-    private double baseSpeed = 0.000002;
-    private double speed = 0.000002;
+    private double baseSpeed = 0.0000002;
+    private double speed = 0.0000002;
     private SeekBar speedSeekBar;
     private Button stopButton;
+    private Button northButton;
+    private Button eastButton;
+    private Button southButton;
+    private Button westButton;
     private int isBack = 0;
     private Button backButton;
 
@@ -134,6 +138,10 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
             controllerView = layoutInflater.inflate(R.layout.activity_controller, null);
             stopButton = (Button) controllerView.findViewById(R.id.stopButton);
             backButton = (Button) controllerView.findViewById(R.id.backButton);
+            northButton = (Button) controllerView.findViewById(R.id.northButton);
+            eastButton = (Button) controllerView.findViewById(R.id.eastButton);
+            southButton = (Button) controllerView.findViewById(R.id.southButton);
+            westButton = (Button) controllerView.findViewById(R.id.westButton);
 
             // 这里是控制移动速度的，有一个基础速度，然后根据速度条的位置增加相应的速度值
             // 因为这里调用了其它layout内的元素，所以需要用LayoutInflater获取到对应的layout再操作
@@ -176,15 +184,31 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
     // 以下四个方法就是控制东南西北的，分别由不同方向按钮调用
     public void onClickNorth(View view) {
         direct = 0;
+        northButton.setAlpha((float)0.5);
+        eastButton.setAlpha((float)1.0);
+        southButton.setAlpha((float)1.0);
+        westButton.setAlpha((float)1.0);
     }
     public void onClickEast(View view) {
         direct = 1;
+        eastButton.setAlpha((float)0.5);
+        northButton.setAlpha((float)1.0);
+        southButton.setAlpha((float)1.0);
+        westButton.setAlpha((float)1.0);
     }
     public void onClickSouth(View view) {
         direct = 2;
+        southButton.setAlpha((float)0.5);
+        eastButton.setAlpha((float)1.0);
+        northButton.setAlpha((float)1.0);
+        westButton.setAlpha((float)1.0);
     }
     public void onClickWest(View view) {
         direct = 3;
+        westButton.setAlpha((float)0.5);
+        southButton.setAlpha((float)1.0);
+        eastButton.setAlpha((float)1.0);
+        northButton.setAlpha((float)1.0);
     }
     // 控制走与停的方法，由stopButton调用
     public void onClickOnOff(View view) {
@@ -255,7 +279,7 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
                         // 因此我们这里需要设置两次设置定位的间隔, 但是这个值又不能设置大了，
                         // 因为，两次定位之间间隔长了，在这个时间窗口有其它程序调用定位功能，就会获取到你真实的位置
                         // 从而导致，位置出现跳跃的现象，我这里设置10毫秒
-                        Thread.sleep(10);
+                        Thread.sleep(1);
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     }

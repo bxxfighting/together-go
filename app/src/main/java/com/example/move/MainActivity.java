@@ -3,7 +3,10 @@ package com.example.move;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.Context;
+import android.content.res.AssetManager;
+import android.graphics.BitmapFactory;
 import android.graphics.PixelFormat;
+import android.graphics.drawable.BitmapDrawable;
 import android.location.Location;
 import android.location.LocationManager;
 import android.os.Build;
@@ -11,12 +14,16 @@ import android.os.Bundle;
 import android.os.SystemClock;
 import android.provider.Settings;
 import android.util.DisplayMetrics;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.Button;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.SeekBar;
+import android.widget.LinearLayout.LayoutParams;
 
 import com.tencent.map.geolocation.TencentLocation;
 import com.tencent.map.geolocation.TencentLocationListener;
@@ -27,6 +34,8 @@ import com.tencent.tencentmap.mapsdk.map.MapView;
 import com.tencent.tencentmap.mapsdk.map.TencentMap;
 import com.tencent.tencentmap.mapsdk.map.UiSettings;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.Random;
 
 
@@ -60,8 +69,16 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
     private Button backButton;
 
     private WindowManager windowManager;
-    private WindowManager.LayoutParams layoutParams;
+    private WindowManager.LayoutParams controllerLayoutParams;
     private View controllerView;
+    private View filterView;
+    private WindowManager.LayoutParams filterLayoutParams;
+    private int isFilter = 0;
+    private Button closeFilterButton;
+    private LinearLayout headLinearLayout;
+    private LayoutParams headLayoutParams;
+    private String[] headImages;
+    private AssetManager assetManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -79,6 +96,7 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
         initLocation();
         initMoveManager();
         initController();
+        initFilter();
     }
 
     // 初始化腾讯地图的一些信息
@@ -112,23 +130,23 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
     // 这里主要是设置悬浮窗的一些配置
     private void initController() {
         windowManager = (WindowManager) getSystemService(WINDOW_SERVICE);
-        layoutParams = new WindowManager.LayoutParams();
+        controllerLayoutParams = new WindowManager.LayoutParams();
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            layoutParams.type = WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY;
+            controllerLayoutParams.type = WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY;
         } else {
-            layoutParams.type = WindowManager.LayoutParams.TYPE_PHONE;
+            controllerLayoutParams.type = WindowManager.LayoutParams.TYPE_PHONE;
         }
-        layoutParams.format = PixelFormat.RGBA_8888;
-        layoutParams.flags = WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE;
-        layoutParams.gravity = Gravity.START | Gravity.TOP;
+        controllerLayoutParams.format = PixelFormat.RGBA_8888;
+        controllerLayoutParams.flags = WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE;
+        controllerLayoutParams.gravity = Gravity.START | Gravity.TOP;
         // 这是悬浮窗的宽高
-        layoutParams.width = 400;
-        layoutParams.height = 420;
+        controllerLayoutParams.width = 400;
+        controllerLayoutParams.height = 420;
         DisplayMetrics metrics = new DisplayMetrics();
         windowManager.getDefaultDisplay().getMetrics(metrics);
         // 这是悬浮窗处于屏幕的位置
-        layoutParams.x = metrics.widthPixels;
-        layoutParams.y = metrics.heightPixels / 2 - 50 * 3 / 2;
+        controllerLayoutParams.x = metrics.widthPixels;
+        controllerLayoutParams.y = metrics.heightPixels / 2 - 50 * 3 / 2;
     }
 
     private void showController() {
@@ -163,8 +181,81 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
                 }
             });
 
-            windowManager.addView(controllerView, layoutParams);
+            windowManager.addView(controllerView, controllerLayoutParams);
         }
+    }
+
+    // 初始化筛选
+    private void initFilter() {
+        filterLayoutParams = new WindowManager.LayoutParams();
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            filterLayoutParams.type = WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY;
+        } else {
+            filterLayoutParams.type = WindowManager.LayoutParams.TYPE_PHONE;
+        }
+        filterLayoutParams.format = PixelFormat.RGBA_8888;
+        filterLayoutParams.flags = WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE;
+        filterLayoutParams.gravity = Gravity.START | Gravity.TOP;
+        DisplayMetrics metrics = new DisplayMetrics();
+        windowManager.getDefaultDisplay().getMetrics(metrics);
+        // 这是悬浮窗的宽高
+        filterLayoutParams.width = metrics.widthPixels;
+        filterLayoutParams.height = metrics.heightPixels;
+        // 这是悬浮窗处于屏幕的位置
+        filterLayoutParams.x = 0;
+        filterLayoutParams.y = 0;
+        headLayoutParams = new LayoutParams(80, 80);
+        headLayoutParams.setMargins(8, 8, 8, 8);
+
+        // 获取assets下的小妖头像
+        assetManager = this.getResources().getAssets();
+        try {
+            // 将所有头像都放到assets/heads下，避免其它图片干扰
+            headImages = assetManager.list("heads");
+        } catch(IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    // 显示筛选界面
+    private void showFilter() {
+        if (Build.VERSION.SDK_INT > 22) {
+            if (Settings.canDrawOverlays(this)) {
+                LayoutInflater layoutInflater = LayoutInflater.from(this);
+                filterView = layoutInflater.inflate(R.layout.activity_filter, null);
+                closeFilterButton = (Button) filterView.findViewById(R.id.closeFilterButton);
+                headLinearLayout = (LinearLayout) filterView.findViewById(R.id.headLinearLayout);
+                windowManager.addView(filterView, filterLayoutParams);
+            }
+        }
+        showPet();
+    }
+    // 显示小妖头像
+    // 这里就是读取assets中的图片，一排显示10个
+    private void showPet() {
+        InputStream input = null;
+        LinearLayout imageLinearLayout = null;
+        for (int i = 0; i < headImages.length; i ++) {
+            Log.i("images: ", String.valueOf(headImages[i]));
+            if (i % 10 == 0) {
+                imageLinearLayout = new LinearLayout(this);
+                imageLinearLayout.setOrientation(LinearLayout.HORIZONTAL);
+                headLinearLayout.addView(imageLinearLayout);
+            }
+            try {
+                input = assetManager.open(headImages[i]);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            ImageView imgView = new ImageView(this);
+            imgView.setLayoutParams(headLayoutParams);
+            imgView.setImageBitmap(BitmapFactory.decodeStream(input));
+            imageLinearLayout.addView(imgView);
+        }
+    }
+    // 隐藏筛选界面
+    private void removeFilter() {
+        windowManager.removeView(filterView);
     }
 
     public void onClick(View view) {
@@ -181,6 +272,9 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
             case R.id.westButton:
                 onClickWest();
                 break;
+            case R.id.stopButton:
+                onClickOnOff();
+                break;
             case R.id.backButton:
                 onClickBack();
                 break;
@@ -193,6 +287,9 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
             case R.id.nextButton:
                 onClickNext();
                 break;
+            case R.id.closeFilterButton:
+                removeFilter();
+                break;
         }
     }
 
@@ -201,17 +298,18 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
     public void onClickBack() {
         isBack += 1;
         if (isBack % 2 == 1) {
-            layoutParams.width = 100;
-            windowManager.updateViewLayout(controllerView, layoutParams);
+            controllerLayoutParams.width = 100;
+            windowManager.updateViewLayout(controllerView, controllerLayoutParams);
             backButton.setText("开");
         } else {
-            layoutParams.width = 400;
-            windowManager.updateViewLayout(controllerView, layoutParams);
+            controllerLayoutParams.width = 400;
+            windowManager.updateViewLayout(controllerView, controllerLayoutParams);
             backButton.setText("收");
         }
     }
-    // 筛选小妖
+    // 设置要筛选小妖
     public void onClickFilter() {
+        showFilter();
     }
     // 自动到小妖身边
     public void onClickAuto() {
@@ -249,7 +347,7 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
         northButton.setAlpha((float)1.0);
     }
     // 控制走与停的方法，由stopButton调用
-    public void onClickOnOff(View view) {
+    public void onClickOnOff() {
         isRun += 1;
         if (isRun % 2 == 0) {
             stopButton.setText("走");

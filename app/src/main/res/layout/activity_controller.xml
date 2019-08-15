@@ -11,7 +11,7 @@ android:layout_height="wrap_content">
         <Button
             android:layout_width="50dp"
             android:layout_height="50dp"
-            android:background="#8DFFFFFF"
+            android:background="#8D00BFFF"
             android:onClick="onClickBack"
             android:id="@+id/backButton"
             android:text="收"
@@ -20,10 +20,19 @@ android:layout_height="wrap_content">
         <Button
             android:layout_width="50dp"
             android:layout_height="50dp"
-            android:background="#8DFFFFFF"
-            android:onClick="onClickNorth"
+            android:background="#8D00FF7F"
+            android:onClick="onClick"
             android:id="@+id/northButton"
             android:text="北"
+            android:visibility="visible"
+            tools:visibility="visible" />
+        <Button
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:background="#8D00BFFF"
+            android:onClick="onClickFilter"
+            android:id="@+id/filterButton"
+            android:text="筛"
             android:visibility="visible"
             tools:visibility="visible" />
     </LinearLayout>
@@ -34,8 +43,8 @@ android:layout_height="wrap_content">
         <Button
             android:layout_width="50dp"
             android:layout_height="50dp"
-            android:background="#8DFFFFFF"
-            android:onClick="onClickWest"
+            android:background="#8D00FF7F"
+            android:onClick="onClick"
             android:id="@+id/westButton"
             android:text="西"
             android:visibility="visible"
@@ -44,7 +53,7 @@ android:layout_height="wrap_content">
         <Button
             android:layout_width="50dp"
             android:layout_height="50dp"
-            android:background="#8DFFFFFF"
+            android:background="#8D00FFFF"
             android:onClick="onClickOnOff"
             android:id="@+id/stopButton"
             android:text="走"
@@ -54,8 +63,8 @@ android:layout_height="wrap_content">
         <Button
             android:layout_width="50dp"
             android:layout_height="50dp"
-            android:background="#8DFFFFFF"
-            android:onClick="onClickEast"
+            android:background="#8D00FF7F"
+            android:onClick="onClick"
             android:id="@+id/eastButton"
             android:text="东"
             android:visibility="visible"
@@ -65,18 +74,31 @@ android:layout_height="wrap_content">
         android:layout_width="wrap_content"
         android:layout_height="wrap_content">
 
-        <Space
-            android:layout_width="51dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1" />
-
         <Button
             android:layout_width="50dp"
             android:layout_height="50dp"
-            android:background="#8DFFFFFF"
-            android:onClick="onClickSouth"
+            android:background="#8D00BFFF"
+            android:onClick="onClickAuto"
+            android:id="@+id/autoButton"
+            android:text="自"
+            android:visibility="visible"
+            tools:visibility="visible" />
+        <Button
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:background="#8D00FF7F"
+            android:onClick="onClick"
             android:id="@+id/southButton"
             android:text="南"
+            android:visibility="visible"
+            tools:visibility="visible" />
+        <Button
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:background="#8D00BFFF"
+            android:onClick="onClickNext"
+            android:id="@+id/nextButton"
+            android:text="下"
             android:visibility="visible"
             tools:visibility="visible" />
     </LinearLayout>

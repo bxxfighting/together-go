@@ -142,7 +142,7 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
             eastButton = (Button) controllerView.findViewById(R.id.eastButton);
             southButton = (Button) controllerView.findViewById(R.id.southButton);
             westButton = (Button) controllerView.findViewById(R.id.westButton);
-
+            northButton.setAlpha((float)0.5);
             // 这里是控制移动速度的，有一个基础速度，然后根据速度条的位置增加相应的速度值
             // 因为这里调用了其它layout内的元素，所以需要用LayoutInflater获取到对应的layout再操作
             speedSeekBar = (SeekBar) controllerView.findViewById(R.id.speedSeekBar);
@@ -167,9 +167,38 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
         }
     }
 
+    public void onClick(View view) {
+        switch (view.getId()) {
+            case R.id.northButton:
+                onClickNorth();
+                break;
+            case R.id.eastButton:
+                onClickEast();
+                break;
+            case R.id.southButton:
+                onClickSouth();
+                break;
+            case R.id.westButton:
+                onClickWest();
+                break;
+            case R.id.backButton:
+                onClickBack();
+                break;
+            case R.id.filterButton:
+                onClickFilter();
+                break;
+            case R.id.autoButton:
+                onClickAuto();
+                break;
+            case R.id.nextButton:
+                onClickNext();
+                break;
+        }
+    }
+
     // 控制面板是展开还是收回的方法，由backButton调用
     // 主要就是重新设置悬浮窗的宽度，然后更新悬浮窗
-    public void onClickBack(View view) {
+    public void onClickBack() {
         isBack += 1;
         if (isBack % 2 == 1) {
             layoutParams.width = 100;
@@ -181,29 +210,38 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
             backButton.setText("收");
         }
     }
+    // 筛选小妖
+    public void onClickFilter() {
+    }
+    // 自动到小妖身边
+    public void onClickAuto() {
+    }
+    // 下一个
+    public void onClickNext() {
+    }
     // 以下四个方法就是控制东南西北的，分别由不同方向按钮调用
-    public void onClickNorth(View view) {
+    public void onClickNorth() {
         direct = 0;
         northButton.setAlpha((float)0.5);
         eastButton.setAlpha((float)1.0);
         southButton.setAlpha((float)1.0);
         westButton.setAlpha((float)1.0);
     }
-    public void onClickEast(View view) {
+    public void onClickEast() {
         direct = 1;
         eastButton.setAlpha((float)0.5);
         northButton.setAlpha((float)1.0);
         southButton.setAlpha((float)1.0);
         westButton.setAlpha((float)1.0);
     }
-    public void onClickSouth(View view) {
+    public void onClickSouth() {
         direct = 2;
         southButton.setAlpha((float)0.5);
         eastButton.setAlpha((float)1.0);
         northButton.setAlpha((float)1.0);
         westButton.setAlpha((float)1.0);
     }
-    public void onClickWest(View view) {
+    public void onClickWest() {
         direct = 3;
         westButton.setAlpha((float)0.5);
         southButton.setAlpha((float)1.0);
@@ -278,7 +316,7 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
                         // 这里是一个死循环，但是我们不可以直接不停的设置定位，那样会把手机卡死
                         // 因此我们这里需要设置两次设置定位的间隔, 但是这个值又不能设置大了，
                         // 因为，两次定位之间间隔长了，在这个时间窗口有其它程序调用定位功能，就会获取到你真实的位置
-                        // 从而导致，位置出现跳跃的现象，我这里设置10毫秒
+                        // 从而导致，位置出现跳跃的现象，我这里设置1毫秒
                         Thread.sleep(1);
                     } catch (InterruptedException e) {
                         e.printStackTrace();

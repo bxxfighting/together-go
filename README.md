@@ -23,3 +23,11 @@
 # 演示效果
 > 点击下载演示视频，查看使用效果  
 [![演示效果](https://github.com/bxxfighting/together-go/blob/master/data/封面.png)](https://github.com/bxxfighting/together-go/blob/master/data/演示.mp4)
+
+# 鸣谢(参考资料)
+虚拟定位: 
+* https://github.com/Hilaver/MockGPS
+* https://github.com/Aslanchen/SimulateGps
+
+捉妖雷达:
+* https://github.com/liuzirui1122/zhuoyao_radar

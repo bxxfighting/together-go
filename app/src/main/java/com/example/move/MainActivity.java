@@ -208,7 +208,7 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
         filterLayoutParams.x = 0;
         filterLayoutParams.y = 0;
         headLayoutParams = new LayoutParams(80, 80);
-        headLayoutParams.setMargins(8, 8, 8, 8);
+        headLayoutParams.setMargins(5, 5, 5, 5);
 
         // 获取assets下的小妖头像
         assetManager = this.getResources().getAssets();

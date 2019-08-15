@@ -36,6 +36,8 @@ import com.tencent.tencentmap.mapsdk.map.UiSettings;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Random;
 
 
@@ -79,6 +81,7 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
     private LayoutParams headLayoutParams;
     private String[] headImages;
     private AssetManager assetManager;
+    private Map<Integer, Boolean> petMap;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -215,6 +218,8 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
         } catch(IOException e) {
             e.printStackTrace();
         }
+        //
+        petMap = new HashMap<Integer, Boolean>();
     }
 
     // 显示筛选界面
@@ -247,9 +252,28 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
             } catch (IOException e) {
                 e.printStackTrace();
             }
-            ImageView imgView = new ImageView(this);
+            final ImageView imgView = new ImageView(this);
             imgView.setLayoutParams(headLayoutParams);
             imgView.setImageBitmap(BitmapFactory.decodeStream(input));
+            int imageId = Integer.valueOf(headImages[i].substring(0, headImages[i].indexOf(".")));
+            petMap.put(imageId,false);
+            imgView.setId(imageId);
+            imgView.setAlpha((float)0.2);
+            imgView.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    int imageId = view.getId();
+                    Log.i("ID: ", String.valueOf(imageId));
+                    Boolean selected = petMap.get(imageId);
+                    selected = !selected;
+                    petMap.put(imageId, selected);
+                    if (selected == true) {
+                        view.setAlpha((float)1.0);
+                    } else {
+                        view.setAlpha((float)0.2);
+                    }
+                }
+            });
             imageLinearLayout.addView(imgView);
         }
     }

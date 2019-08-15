@@ -218,7 +218,7 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
         } catch(IOException e) {
             e.printStackTrace();
         }
-        //
+        // 记录小妖当前是否被选，以小妖id为key，false为未选、true为已选
         petMap = new HashMap<Integer, Boolean>();
     }
 

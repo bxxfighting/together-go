@@ -4,6 +4,7 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.content.res.AssetManager;
 import android.graphics.BitmapFactory;
 import android.graphics.PixelFormat;
@@ -46,8 +47,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Random;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import okhttp3.OkHttpClient;
@@ -116,7 +119,9 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
     // 用于获取assets目录下的图片
     private AssetManager assetManager;
     // 筛选器中选中的妖灵
-    private Map<Integer, Boolean> petMap;
+    private Set<String> petSet;
+    private SharedPreferences petSharedPreferences;
+    private SharedPreferences.Editor editor;
     // 腾讯提供的获取坐标位置附近妖灵的websocket
     private String wssHost = "wss://publicld.gwgo.qq.com?account_value=0&account_type=1&appid=0&token=0";
     // websocket管理，引用的第三方库
@@ -369,7 +374,10 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
             e.printStackTrace();
         }
         // 记录小妖当前是否被选，以小妖id为key，false为未选、true为已选
-        petMap = new HashMap<Integer, Boolean>();
+        petSharedPreferences = getSharedPreferences("pet", this.MODE_PRIVATE);
+        editor = petSharedPreferences.edit();
+        petSet = new HashSet<String>(petSharedPreferences.getStringSet("selected", new HashSet<String>()));
+        Log.i("petSet", petSet.toString());
     }
 
     // 显示筛选界面
@@ -405,18 +413,26 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
             imgView.setImageBitmap(BitmapFactory.decodeStream(input));
             int imageId = Integer.valueOf(headImages[i].substring(0, headImages[i].indexOf(".")));
             imgView.setId(imageId);
-            imgView.setAlpha((float)0.3);
+            if (petSet.contains(String.valueOf(imageId))) {
+                imgView.setAlpha((float)1.0);
+            } else {
+                imgView.setAlpha((float)0.3);
+            }
             imgView.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
                     int imageId = view.getId();
-                    if (petMap.containsKey(imageId)) {
-                        petMap.remove(imageId);
+                    if (petSet.contains(String.valueOf(imageId))) {
+                        petSet.remove(String.valueOf(imageId));
                         view.setAlpha((float)0.3);
                     } else {
-                        petMap.put(imageId, true);
+                        petSet.add(String.valueOf(imageId));
                         view.setAlpha((float)1.0);
                     }
+                    Log.i("petSet 2", petSet.toString());
+                    editor.putStringSet("selected", petSet);
+                    editor.commit();
+                    Log.i("petSet 3", petSharedPreferences.getStringSet("selected", new HashSet<String>()).toString());
                 }
             });
             imageLinearLayout.addView(imgView);
@@ -496,7 +512,7 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
                 final double nextLatitude = gps.getLat();
                 final double nextLongtitude = gps.getLon();
                 final int sprite_id = currentPet.getInt("sprite_id");
-                if (petMap.containsKey(sprite_id)) {
+                if (petSet.contains(String.valueOf(sprite_id))) {
                     Thread moveThread = new Thread(new Runnable() {
                                                        @Override
                                                        public void run() {

@@ -229,8 +229,8 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
         try {
             jsonObject = new JSONObject();
             jsonObject.put("request_type", "1001");
-            jsonObject.put("latitude", 39963159);
-            jsonObject.put("longtitude", 116357896);
+            jsonObject.put("latitude", (int)(latitude*1000*1000));
+            jsonObject.put("longtitude", (int)(longtitude*1000*1000));
             jsonObject.put("platform", 0);
             long times = System.currentTimeMillis();
             jsonObject.put("requestid", 7782306);
@@ -557,6 +557,8 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
         if (latitude == 0 && longtitude == 0) {
             latitude = location.getLatitude();
             longtitude = location.getLongitude();
+            Toast toast = Toast.makeText(getApplicationContext(), "定位成功", Toast.LENGTH_SHORT);
+            toast.show();
         }
         tencentMap.setCenter(new LatLng(latitude, longtitude));
     }

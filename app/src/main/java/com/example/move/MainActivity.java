@@ -402,16 +402,15 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
             imgView.setLayoutParams(headLayoutParams);
             imgView.setImageBitmap(BitmapFactory.decodeStream(input));
             int imageId = Integer.valueOf(headImages[i].substring(0, headImages[i].indexOf(".")));
-            //petMap.put(imageId,false);
             imgView.setId(imageId);
-            imgView.setAlpha((float)0.2);
+            imgView.setAlpha((float)0.3);
             imgView.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
                     int imageId = view.getId();
                     if (petMap.containsKey(imageId)) {
                         petMap.remove(imageId);
-                        view.setAlpha((float)0.2);
+                        view.setAlpha((float)0.3);
                     } else {
                         petMap.put(imageId, true);
                         view.setAlpha((float)1.0);

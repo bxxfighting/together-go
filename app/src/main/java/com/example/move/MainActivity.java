@@ -59,7 +59,9 @@ import okio.ByteString;
 
 
 public class MainActivity extends AppCompatActivity implements TencentLocationListener {
-
+    private double pi = 3.1415926535897932384626;
+    public double a = 6378245.0;
+    public double ee = 0.00669342162296594323;
     // 腾讯地图
     MapView mapView = null;
     TencentMap tencentMap = null;
@@ -488,8 +490,11 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
             currentIndex ++;
             try {
                 JSONObject currentPet = jsonArray.getJSONObject(currentIndex);
-                final double  nextLatitude = (double)currentPet.getInt("latitude") / (1000 * 1000);
-                final double nextLongtitude = (double)currentPet.getInt("longtitude") / (1000 * 1000);
+                double  tmpNextLatitude = (double)currentPet.getInt("latitude") / (1000 * 1000);
+                double tmpNextLongtitude = (double)currentPet.getInt("longtitude") / (1000 * 1000);
+                GPS gps = gcj2gps84(tmpNextLatitude, tmpNextLongtitude);
+                final double nextLatitude = gps.getLat();
+                final double nextLongtitude = gps.getLon();
                 final int sprite_id = currentPet.getInt("sprite_id");
                 if (petMap.containsKey(sprite_id)) {
                     Thread moveThread = new Thread(new Runnable() {
@@ -657,5 +662,57 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
             }
         });
         thread.start();
+    }
+
+    private class GPS {
+        private double lat;
+        private double lon;
+        public GPS(double lat, double lon) {
+            this.lat = lat;
+            this.lon = lon;
+        }
+        public double getLat() {
+            return lat;
+        }
+        public double getLon() {
+            return lon;
+        }
+        public void setLat(double lat) {
+            this.lat = lat;
+        }
+        public void setLon(double lon) {
+            this.lon = lon;
+        }
+    }
+
+    // GCJ02坐标转GPS84
+    private GPS gcj2gps84(double lat, double lon) {
+        double dLat = transLat(lon - 105.0, lat - 35.0);
+        double dLon = transLon(lon - 105.0, lat - 35.0);
+        double radLat = lat / 180.0 * pi;
+        double magic = Math.sin(radLat);
+        magic = 1 - ee * magic * magic;
+        double sqrtMagic = Math.sqrt(magic);
+        dLat = (dLat * 180.0) / ((a * (1 - ee)) / (magic * sqrtMagic) * pi);
+        dLon = (dLon * 180.0) / (a / sqrtMagic * Math.cos(radLat) * pi);
+        double mgLat = lat + dLat;
+        double mgLon = lon + dLon;
+        mgLat = lat * 2 - mgLat;
+        mgLon = lon * 2 - mgLon;
+        return new GPS(mgLat, mgLon);
+    }
+    private double transLat(double x, double y) {
+        double ret = -100.0 + 2.0 * x + 3.0 * y + 0.2 * y * y + 0.1 * x * y + 0.2 * Math.sqrt(Math.abs(x));
+        ret += (20.0 * Math.sin(6.0 * x * pi) + 20.0 * Math.sin(2.0 * x * pi)) * 2.0 / 3.0;
+        ret += (20.0 * Math.sin(y * pi) + 40.0 * Math.sin(y / 3.0 * pi)) * 2.0 / 3.0;
+        ret += (160.0 * Math.sin(y / 12.0 * pi) + 320 * Math.sin(y * pi / 30.0)) * 2.0 / 3.0;
+        return ret;
+    }
+    private double transLon(double x, double y) {
+        double ret = 300.0 + x + 2.0 * y + 0.1 * x * x + 0.1 * x * y + 0.1 * Math.sqrt(Math.abs(x));
+        ret += (20.0 * Math.sin(6.0 * x * pi) + 20.0 * Math.sin(2.0 * x * pi)) * 2.0 / 3.0;
+        ret += (20.0 * Math.sin(x * pi) + 40.0 * Math.sin(x / 3.0 * pi)) * 2.0 / 3.0;
+        ret += (150.0 * Math.sin(x / 12.0 * pi) + 300.0 * Math.sin(x / 30.0 * pi)) * 2.0 / 3.0;
+        return ret;
     }
 }

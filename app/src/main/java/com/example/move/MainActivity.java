@@ -1,5 +1,6 @@
 package com.example.move;
 
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.Context;
@@ -25,6 +26,8 @@ import android.widget.LinearLayout;
 import android.widget.SeekBar;
 import android.widget.LinearLayout.LayoutParams;
 
+import com.rabtman.wsmanager.WsManager;
+import com.rabtman.wsmanager.listener.WsStatusListener;
 import com.tencent.map.geolocation.TencentLocation;
 import com.tencent.map.geolocation.TencentLocationListener;
 import com.tencent.map.geolocation.TencentLocationManager;
@@ -34,11 +37,24 @@ import com.tencent.tencentmap.mapsdk.map.MapView;
 import com.tencent.tencentmap.mapsdk.map.TencentMap;
 import com.tencent.tencentmap.mapsdk.map.UiSettings;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
+import java.util.concurrent.TimeUnit;
+
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
+import okhttp3.WebSocket;
+import okhttp3.WebSocketListener;
+import okio.ByteString;
 
 
 public class MainActivity extends AppCompatActivity implements TencentLocationListener {
@@ -54,7 +70,7 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
     private Thread thread;
     private int isRun = 0;
     private final Object lock = new Object();
-    private double longitude = 0;
+    private double longtitude = 0;
     private double latitude = 0;
     private double altitude;
     private float accuracy;
@@ -82,6 +98,13 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
     private String[] headImages;
     private AssetManager assetManager;
     private Map<Integer, Boolean> petMap;
+    // private OkHttpClient wssClient;
+    private String wssHost = "wss://publicld.gwgo.qq.com?account_value=0&account_type=1&appid=0&token=0";
+    // private WebSocket webSocket;
+    private WsManager wsManager;
+    private JSONObject jsonObject;
+    private JSONArray jsonArray;
+    private int currentIndex = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -98,6 +121,7 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
         initMap();
         initLocation();
         initMoveManager();
+        initWebsocket();
         initController();
         initFilter();
     }
@@ -128,6 +152,108 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
                 true, false, false, true,
                 true, true, 0, 5);
         locationManager.setTestProviderEnabled(LocationManager.GPS_PROVIDER, true);
+    }
+
+    // 初始化websocket
+    private void initWebsocket() {
+        OkHttpClient okHttpClient = new OkHttpClient().newBuilder()
+                .pingInterval(15, TimeUnit.SECONDS)
+                .retryOnConnectionFailure(true)
+                .build();
+        wsManager = new WsManager.Builder(this)
+                .wsUrl(wssHost)
+                .needReconnect(true)
+                .client(okHttpClient)
+                .build();
+        wsManager.setWsStatusListener(new WsStatusListener() {
+            @Override
+            public void onOpen(Response response) {
+                super.onOpen(response);
+            }
+
+            @Override
+            public void onMessage(String text) {
+                super.onMessage(text);
+                Log.i("Message", text);
+            }
+
+            @Override
+            public void onMessage(ByteString bytes) {
+                super.onMessage(bytes);
+                Log.i("RECV Message", bytes.toString());
+                byte[] bs = bytes.toByteArray();
+                byte[] buffer = new byte[bs.length-4];
+                System.arraycopy(bytes.toByteArray(), 4, buffer, 0, bs.length-4);
+                String j = new String(buffer);
+                Log.i("Message buffer", j);
+                try {
+                    JSONObject json = new JSONObject(j);
+                    jsonArray = json.getJSONArray("sprite_list");
+                    Log.i("jsonArray", jsonArray.toString());
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            }
+
+            @Override
+            public void onReconnect() {
+                super.onReconnect();
+            }
+
+            @Override
+            public void onClosing(int code, String reason) {
+                super.onClosing(code, reason);
+                onReconnect();
+            }
+
+            @Override
+            public void onClosed(int code, String reason) {
+                super.onClosed(code, reason);
+                onReconnect();
+            }
+
+            @Override
+            public void onFailure(Throwable t, Response response) {
+                super.onFailure(t, response);
+                onReconnect();
+            }
+        });
+        wsManager.startConnect();
+        getPets();
+    }
+
+    private void getPets() {
+        try {
+            jsonObject = new JSONObject();
+            jsonObject.put("request_type", "1001");
+            jsonObject.put("latitude", 39963159);
+            jsonObject.put("longtitude", 116357896);
+            jsonObject.put("platform", 0);
+            long times = System.currentTimeMillis();
+            jsonObject.put("requestid", 7782306);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        Log.i("json: ", jsonObject.toString());
+        String json = jsonObject.toString();
+        int length = json.length();
+        byte[] jsonByte = json.getBytes();
+        Log.i("jsonbyte", jsonByte.toString());
+        byte[] buffer = new byte[4+length];
+        length += 4;
+        buffer[0] = (byte)(length & 0xFF000000);
+        buffer[1] = (byte)(length & 0xFF0000);
+        buffer[2] = (byte)(length & 0xFF00);
+        buffer[3] = (byte)(length & 0xFF);
+        Log.i("string length", String.valueOf(length));
+        Log.i("json byte length", String.valueOf(jsonByte.length));
+        System.arraycopy(jsonByte, 0, buffer, 4, jsonByte.length);
+        Log.i("buffer length", String.valueOf(buffer.length));
+
+        Log.i("buffer", Arrays.toString(buffer));
+        ByteString bytes = ByteString.of(buffer);
+        Log.i("bytes", bytes.toString());
+        wsManager.sendMessage(bytes);
     }
 
     // 这里主要是设置悬浮窗的一些配置
@@ -241,7 +367,6 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
         InputStream input = null;
         LinearLayout imageLinearLayout = null;
         for (int i = 0; i < headImages.length; i ++) {
-            Log.i("images: ", String.valueOf(headImages[i]));
             if (i % 10 == 0) {
                 imageLinearLayout = new LinearLayout(this);
                 imageLinearLayout.setOrientation(LinearLayout.HORIZONTAL);
@@ -263,7 +388,6 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
                 @Override
                 public void onClick(View view) {
                     int imageId = view.getId();
-                    Log.i("ID: ", String.valueOf(imageId));
                     Boolean selected = petMap.get(imageId);
                     selected = !selected;
                     petMap.put(imageId, selected);
@@ -276,6 +400,7 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
             });
             imageLinearLayout.addView(imgView);
         }
+        getPets();
     }
     // 隐藏筛选界面
     private void removeFilter() {
@@ -340,6 +465,42 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
     }
     // 下一个
     public void onClickNext() {
+        if (jsonArray.length() > 0 && jsonArray.length() > currentIndex + 1) {
+            currentIndex ++;
+            try {
+                JSONObject currentPet = jsonArray.getJSONObject(currentIndex);
+                final double  nextLatitude = (double)currentPet.getInt("latitude") / (1000 * 1000);
+                final double nextLongtitude = (double)currentPet.getInt("longtitude") / (1000 * 1000);
+                Thread moveThread = new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        final double latitudeStep = (nextLatitude - latitude) / 100;
+                        final double longtitudeStep = (nextLongtitude - longtitude) / 100;
+                        for (int i = 0; i < 100; i ++) {
+                            try {
+                                Thread.sleep(1);
+                            } catch (InterruptedException e) {
+                                e.printStackTrace();
+                            }
+                            latitude += latitudeStep;
+                        }
+                        for (int i = 0; i < 100; i ++) {
+                            try {
+                                Thread.sleep(1);
+                            } catch (InterruptedException e) {
+                                e.printStackTrace();
+                            }
+                            longtitude += longtitudeStep;
+                        }
+                        latitude = nextLatitude;
+                        longtitude = nextLongtitude;
+                    }
+                });
+                moveThread.start();
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+        }
     }
     // 以下四个方法就是控制东南西北的，分别由不同方向按钮调用
     public void onClickNorth() {
@@ -384,11 +545,11 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
     // 我这里就是让定位获取的坐标始终位于地图中央
     @Override
     public void onLocationChanged(TencentLocation location, int error, String reason) {
-        if (latitude == 0 && longitude == 0) {
+        if (latitude == 0 && longtitude == 0) {
             latitude = location.getLatitude();
-            longitude = location.getLongitude();
+            longtitude = location.getLongitude();
         }
-        tencentMap.setCenter(new LatLng(latitude, longitude));
+        tencentMap.setCenter(new LatLng(latitude, longtitude));
     }
 
     @Override
@@ -406,7 +567,7 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
         return random.nextInt(max) % (max-min+1) + min;
     }
 
-    private void setLocation(double longitude, double latitude) {
+    private void setLocation(double longtitude, double latitude) {
 
         // 因为我是在北京的，我把这个海拔设置了一个符合北京的范围，随机生成
         altitude = genDouble(38.0, 50.5);
@@ -417,7 +578,7 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
         Location location = new Location(LocationManager.GPS_PROVIDER);
         location.setTime(System.currentTimeMillis());
         location.setLatitude(latitude);
-        location.setLongitude(longitude);
+        location.setLongitude(longtitude);
         // 北京海拔大概范围，随机生成
         location.setAltitude(altitude);
         // GPS定位精度范围，随机生成
@@ -453,17 +614,17 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
                                 latitude += speed;
                                 break;
                             case 1:
-                                longitude += speed;
+                                longtitude += speed;
                                 break;
                             case 2:
                                 latitude -= speed;
                                 break;
                             case 3:
-                                longitude -= speed;
+                                longtitude -= speed;
                                 break;
                         }
                     }
-                    setLocation(longitude, latitude);
+                    setLocation(longtitude, latitude);
                 }
             }
         });

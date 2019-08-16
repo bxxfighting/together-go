@@ -60,51 +60,70 @@ import okio.ByteString;
 
 public class MainActivity extends AppCompatActivity implements TencentLocationListener {
 
+    // 腾讯地图
     MapView mapView = null;
     TencentMap tencentMap = null;
+    // 腾讯定位
     TencentLocationManager tencentLocationManager;
     TencentLocationRequest tencentLocationRequest;
 
 
     private Random random;
+    // 模拟定位
     private LocationManager locationManager;
+    // 持续模拟设置定位线程
     private Thread thread;
+    // 设置移动还是停下
     private int isRun = 0;
-    private final Object lock = new Object();
+    // 记录当前设置的定位值
     private double longtitude = 0;
     private double latitude = 0;
+    // 设置的当前定位海拔
     private double altitude;
+    // 设置的当前定位精度
     private float accuracy;
+    // 当前行走方向
     private int direct = 0;
+    // 基础移动速度
     private double baseSpeed = 0.0000002;
+    // 移动速度
     private double speed = 0.0000002;
+    // 控制器上的功能组件
     private SeekBar speedSeekBar;
     private Button stopButton;
     private Button northButton;
     private Button eastButton;
     private Button southButton;
     private Button westButton;
-    private int isBack = 0;
     private Button backButton;
+    // 判断控制器是收起还是展开
+    private int isBack = 0;
 
+    // 悬浮效果控制器
     private WindowManager windowManager;
     private WindowManager.LayoutParams controllerLayoutParams;
+    // 控制器页面
     private View controllerView;
+    // 筛选器页面
     private View filterView;
     private WindowManager.LayoutParams filterLayoutParams;
-    private int isFilter = 0;
-    private Button closeFilterButton;
     private LinearLayout headLinearLayout;
     private LayoutParams headLayoutParams;
+    // 存储妖灵头像图片
     private String[] headImages;
+    // 用于获取assets目录下的图片
     private AssetManager assetManager;
+    // 筛选器中选中的妖灵
     private Map<Integer, Boolean> petMap;
-    // private OkHttpClient wssClient;
+    // 腾讯提供的获取坐标位置附近妖灵的websocket
     private String wssHost = "wss://publicld.gwgo.qq.com?account_value=0&account_type=1&appid=0&token=0";
-    // private WebSocket webSocket;
+    // websocket管理，引用的第三方库
     private WsManager wsManager;
+    // 用于向websocket发送数据
     private JSONObject jsonObject;
+    // 记录websocket返回的妖灵列表
     private JSONArray jsonArray;
+    // 记录当前查找到jsonArray中的哪个妖灵
     private int currentIndex = 0;
 
     @Override
@@ -357,7 +376,6 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
             if (Settings.canDrawOverlays(this)) {
                 LayoutInflater layoutInflater = LayoutInflater.from(this);
                 filterView = layoutInflater.inflate(R.layout.activity_filter, null);
-                closeFilterButton = (Button) filterView.findViewById(R.id.closeFilterButton);
                 headLinearLayout = (LinearLayout) filterView.findViewById(R.id.headLinearLayout);
                 windowManager.addView(filterView, filterLayoutParams);
             }

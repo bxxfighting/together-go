@@ -384,20 +384,19 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
             imgView.setLayoutParams(headLayoutParams);
             imgView.setImageBitmap(BitmapFactory.decodeStream(input));
             int imageId = Integer.valueOf(headImages[i].substring(0, headImages[i].indexOf(".")));
-            petMap.put(imageId,false);
+            //petMap.put(imageId,false);
             imgView.setId(imageId);
             imgView.setAlpha((float)0.2);
             imgView.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
                     int imageId = view.getId();
-                    Boolean selected = petMap.get(imageId);
-                    selected = !selected;
-                    petMap.put(imageId, selected);
-                    if (selected == true) {
-                        view.setAlpha((float)1.0);
-                    } else {
+                    if (petMap.containsKey(imageId)) {
+                        petMap.remove(imageId);
                         view.setAlpha((float)0.2);
+                    } else {
+                        petMap.put(imageId, true);
+                        view.setAlpha((float)1.0);
                     }
                 }
             });
@@ -474,32 +473,37 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
                 JSONObject currentPet = jsonArray.getJSONObject(currentIndex);
                 final double  nextLatitude = (double)currentPet.getInt("latitude") / (1000 * 1000);
                 final double nextLongtitude = (double)currentPet.getInt("longtitude") / (1000 * 1000);
-                Thread moveThread = new Thread(new Runnable() {
-                    @Override
-                    public void run() {
-                        final double latitudeStep = (nextLatitude - latitude) / 100;
-                        final double longtitudeStep = (nextLongtitude - longtitude) / 100;
-                        for (int i = 0; i < 100; i ++) {
-                            try {
-                                Thread.sleep(1);
-                            } catch (InterruptedException e) {
-                                e.printStackTrace();
+                final int sprite_id = currentPet.getInt("sprite_id");
+                if (petMap.containsKey(sprite_id)) {
+                    Thread moveThread = new Thread(new Runnable() {
+                                                       @Override
+                                                       public void run() {
+                            final double latitudeStep = (nextLatitude - latitude) / 100;
+                            final double longtitudeStep = (nextLongtitude - longtitude) / 100;
+                            for (int i = 0; i < 100; i ++) {
+                                try {
+                                    Thread.sleep(1);
+                                } catch (InterruptedException e) {
+                                    e.printStackTrace();
+                                }
+                                latitude += latitudeStep;
                             }
-                            latitude += latitudeStep;
-                        }
-                        for (int i = 0; i < 100; i ++) {
-                            try {
-                                Thread.sleep(1);
-                            } catch (InterruptedException e) {
-                                e.printStackTrace();
+                            for (int i = 0; i < 100; i ++) {
+                                try {
+                                    Thread.sleep(1);
+                                } catch (InterruptedException e) {
+                                    e.printStackTrace();
+                                }
+                                longtitude += longtitudeStep;
                             }
-                            longtitude += longtitudeStep;
-                        }
-                        latitude = nextLatitude;
-                        longtitude = nextLongtitude;
+                            latitude = nextLatitude;
+                            longtitude = nextLongtitude;
                     }
-                });
-                moveThread.start();
+                    });
+                    moveThread.start();
+                } else {
+                    onClickNext();
+                }
             } catch (JSONException e) {
                 e.printStackTrace();
             }

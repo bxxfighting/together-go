@@ -25,6 +25,7 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.SeekBar;
 import android.widget.LinearLayout.LayoutParams;
+import android.widget.Toast;
 
 import com.rabtman.wsmanager.WsManager;
 import com.rabtman.wsmanager.listener.WsStatusListener;
@@ -189,6 +190,9 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
                 try {
                     JSONObject json = new JSONObject(j);
                     jsonArray = json.getJSONArray("sprite_list");
+                    currentIndex = 0;
+                    Toast toast = Toast.makeText(getApplicationContext(), "来了", Toast.LENGTH_SHORT);
+                    toast.show();
                     Log.i("jsonArray", jsonArray.toString());
                 } catch (JSONException e) {
                     e.printStackTrace();
@@ -219,7 +223,6 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
             }
         });
         wsManager.startConnect();
-        getPets();
     }
 
     private void getPets() {
@@ -400,7 +403,6 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
             });
             imageLinearLayout.addView(imgView);
         }
-        getPets();
     }
     // 隐藏筛选界面
     private void removeFilter() {
@@ -462,10 +464,11 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
     }
     // 自动到小妖身边
     public void onClickAuto() {
+        getPets();
     }
     // 下一个
     public void onClickNext() {
-        if (jsonArray.length() > 0 && jsonArray.length() > currentIndex + 1) {
+        if (jsonArray != null && jsonArray.length() > 0 && jsonArray.length() > currentIndex + 1) {
             currentIndex ++;
             try {
                 JSONObject currentPet = jsonArray.getJSONObject(currentIndex);
@@ -500,6 +503,8 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
             } catch (JSONException e) {
                 e.printStackTrace();
             }
+        } else {
+            getPets();
         }
     }
     // 以下四个方法就是控制东南西北的，分别由不同方向按钮调用

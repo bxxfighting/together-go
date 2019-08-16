@@ -478,9 +478,9 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
                     Thread moveThread = new Thread(new Runnable() {
                                                        @Override
                                                        public void run() {
-                            final double latitudeStep = (nextLatitude - latitude) / 100;
-                            final double longtitudeStep = (nextLongtitude - longtitude) / 100;
-                            for (int i = 0; i < 100; i ++) {
+                            final double latitudeStep = (nextLatitude - latitude) / 500;
+                            final double longtitudeStep = (nextLongtitude - longtitude) / 500;
+                            for (int i = 0; i < 500; i ++) {
                                 try {
                                     Thread.sleep(1);
                                 } catch (InterruptedException e) {
@@ -488,7 +488,7 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
                                 }
                                 latitude += latitudeStep;
                             }
-                            for (int i = 0; i < 100; i ++) {
+                            for (int i = 0; i < 500; i ++) {
                                 try {
                                     Thread.sleep(1);
                                 } catch (InterruptedException e) {

@@ -46,6 +46,7 @@ import org.json.JSONObject;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -216,7 +217,7 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
                 try {
                     JSONObject json = new JSONObject(j);
                     jsonArray = json.getJSONArray("sprite_list");
-                    currentIndex = 0;
+                    currentIndex = jsonArray.length() - 1;
                     Toast toast = Toast.makeText(getApplicationContext(), "来了", Toast.LENGTH_SHORT);
                     toast.show();
                     Log.i("jsonArray", jsonArray.toString());
@@ -502,8 +503,9 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
     }
     // 下一个
     public void onClickNext() {
-        if (jsonArray != null && jsonArray.length() > 0 && jsonArray.length() > currentIndex + 1) {
-            currentIndex ++;
+        // 我这里逆序查找，因为，一般后台的妖灵都比较好
+        if (jsonArray != null && jsonArray.length() > 0 && currentIndex > 0) {
+            currentIndex --;
             try {
                 JSONObject currentPet = jsonArray.getJSONObject(currentIndex);
                 double  tmpNextLatitude = (double)currentPet.getInt("latitude") / (1000 * 1000);
@@ -512,7 +514,13 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
                 final double nextLatitude = gps.getLat();
                 final double nextLongtitude = gps.getLon();
                 final int sprite_id = currentPet.getInt("sprite_id");
-                if (petSet.contains(String.valueOf(sprite_id))) {
+                int gentime = currentPet.getInt("gentime");
+                int lifetime = currentPet.getInt("lifetime");
+                long currentTime = System.currentTimeMillis() / 1000;
+                Log.i("gentime", String.valueOf(gentime));
+                Log.i("currentTime", String.valueOf(currentTime));
+                if (petSet.contains(String.valueOf(sprite_id)) && (gentime + lifetime) > (currentTime + 2)) {
+                    Log.i("ID:", String.valueOf(sprite_id));
                     Thread moveThread = new Thread(new Runnable() {
                                                        @Override
                                                        public void run() {

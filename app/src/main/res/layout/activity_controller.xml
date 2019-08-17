@@ -20,7 +20,8 @@ android:layout_height="wrap_content">
         <Button
             android:layout_width="50dp"
             android:layout_height="50dp"
-            android:background="#8D00FF7F"
+            android:background="@color/colorClick"
+            android:textColor="@color/colorClickText"
             android:onClick="onClick"
             android:id="@+id/northButton"
             android:text="北"
@@ -43,7 +44,8 @@ android:layout_height="wrap_content">
         <Button
             android:layout_width="50dp"
             android:layout_height="50dp"
-            android:background="#8D00FF7F"
+            android:background="@color/colorUnClick"
+            android:textColor="@color/colorUnClickText"
             android:onClick="onClick"
             android:id="@+id/westButton"
             android:text="西"
@@ -63,7 +65,8 @@ android:layout_height="wrap_content">
         <Button
             android:layout_width="50dp"
             android:layout_height="50dp"
-            android:background="#8D00FF7F"
+            android:background="@color/colorUnClick"
+            android:textColor="@color/colorUnClickText"
             android:onClick="onClick"
             android:id="@+id/eastButton"
             android:text="东"
@@ -86,7 +89,8 @@ android:layout_height="wrap_content">
         <Button
             android:layout_width="50dp"
             android:layout_height="50dp"
-            android:background="#8D00FF7F"
+            android:background="@color/colorUnClick"
+            android:textColor="@color/colorUnClickText"
             android:onClick="onClick"
             android:id="@+id/southButton"
             android:text="南"

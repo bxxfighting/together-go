@@ -100,8 +100,8 @@ android:layout_height="wrap_content">
             android:layout_height="50dp"
             android:background="#8D00BFFF"
             android:onClick="onClick"
-            android:id="@+id/nextButton"
-            android:text="下"
+            android:id="@+id/scopeButton"
+            android:text="小"
             android:visibility="visible"
             tools:visibility="visible" />
     </LinearLayout>

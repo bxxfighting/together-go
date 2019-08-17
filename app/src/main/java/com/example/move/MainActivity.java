@@ -47,7 +47,10 @@ import org.json.JSONObject;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -102,8 +105,9 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
     private Button southButton;
     private Button westButton;
     private Button backButton;
-    private Button nextButton;
-    private int nextCount = 0;
+    private Button scopeButton;
+    // 定位范围
+    private int scope = 0;
     private Button autoButton;
     private int autoCount = 0;
     // 判断控制器是收起还是展开
@@ -137,9 +141,15 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
     private JSONArray jsonArray;
     // 记录当前查找到jsonArray中的哪个妖灵
     private int currentIndex = 0;
+    // 单次查询坐标范围，因此如果要上下左右移动时，可以移动下面的值 / 2的范围，就可以进行地毯式搜索
+    private double scopeLat = 0.013559;
+    private double scopeLon = 0.017802;
     // 记录上次获取妖灵时使用的坐标
     private double autoLatitude;
     private double autoLongtitude;
+    // 每次请求都有requestId，而成功返回时，同样有此Id，通过记录和比较requestId来判断，上次请求是否成功
+    private long requestId;
+    private long checkRequestId;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -173,8 +183,10 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
         tencentMap = mapView.getMap();
         tencentMap.setZoom(20);
         UiSettings uiSettings = mapView.getUiSettings();
-        uiSettings.setZoomGesturesEnabled(false);
-        uiSettings.setScrollGesturesEnabled(false);
+        // 地图缩放
+        //uiSettings.setZoomGesturesEnabled(false);
+        // 地图滚动
+        //uiSettings.setScrollGesturesEnabled(false);
     }
 
     // 初始化腾讯定位的一些信息
@@ -237,10 +249,11 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
                 try {
                     JSONObject json = new JSONObject(j);
                     jsonArray = json.getJSONArray("sprite_list");
+                    checkRequestId = json.getLong("requestid");
                     currentIndex = jsonArray.length() - 1;
                     Toast toast = Toast.makeText(getApplicationContext(), "来了", Toast.LENGTH_SHORT);
                     toast.show();
-                    onClickNext();
+                    onClickAuto();
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
@@ -274,13 +287,46 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
 
     private void getPets() {
         try {
+            double lat = 0;
+            double lon = 0;
+            switch (scope % 2) {
+                case 0:
+                    lat = latitude;
+                    lon = longtitude;
+                    break;
+                case 1:
+                    if (requestId == checkRequestId) {
+                        switch (direct % 4) {
+                            case 0:
+                                autoLatitude += (scopeLat / 2);
+                                latitude = autoLatitude;
+                                break;
+                            case 1:
+                                autoLongtitude += (scopeLon / 2);
+                                longtitude = autoLongtitude;
+                                break;
+                            case 2:
+                                autoLatitude -= (scopeLat / 2);
+                                latitude = autoLatitude;
+                                break;
+                            case 3:
+                                autoLongtitude -= (scopeLon / 2);
+                                longtitude = autoLongtitude;
+                                break;
+                        }
+                    }
+                    break;
+                default:
+                    break;
+            }
             jsonObject = new JSONObject();
             jsonObject.put("request_type", "1001");
             jsonObject.put("latitude", (int)(latitude*1000*1000));
             jsonObject.put("longtitude", (int)(longtitude*1000*1000));
             jsonObject.put("platform", 0);
-            long times = System.currentTimeMillis();
-            jsonObject.put("requestid", 7782306);
+            // 保证requestId为七位数字
+            requestId = System.currentTimeMillis() % (10 * 1000 * 1000);
+            jsonObject.put("requestid", requestId);
         } catch (JSONException e) {
             e.printStackTrace();
         }
@@ -335,7 +381,7 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
             LayoutInflater layoutInflater = LayoutInflater.from(this);
             controllerView = layoutInflater.inflate(R.layout.activity_controller, null);
             stopButton = (Button) controllerView.findViewById(R.id.stopButton);
-            nextButton = (Button) controllerView.findViewById(R.id.nextButton);
+            scopeButton = (Button) controllerView.findViewById(R.id.scopeButton);
             autoButton = (Button) controllerView.findViewById(R.id.autoButton);
             backButton = (Button) controllerView.findViewById(R.id.backButton);
             northButton = (Button) controllerView.findViewById(R.id.northButton);
@@ -490,8 +536,8 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
             case R.id.autoButton:
                 onClickAuto();
                 break;
-            case R.id.nextButton:
-                onClickNext();
+            case R.id.scopeButton:
+                onClickScope();
                 break;
             case R.id.closeFilterButton:
                 removeFilter();
@@ -575,79 +621,33 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
                     });
                     moveThread.start();
                 } else {
-                    onClickNext();
+                    onClickAuto();
                 }
             } catch (JSONException e) {
                 e.printStackTrace();
             }
         } else {
+            autoLatitude = latitude;
+            autoLongtitude = longtitude;
             getPets();
         }
     }
-    // 下一个
-    public void onClickNext() {
-        nextCount ++;
-        switch (nextCount % 4) {
+    // 更改查找范围
+    public void onClickScope() {
+        scope ++;
+        switch (scope % 2) {
             case 0:
-                nextButton.setBackgroundColor(getResources().getColor(R.color.colorNextButon0));
+                scopeButton.setBackgroundColor(getResources().getColor(R.color.colorNextButon0));
+                scopeButton.setText("小");
                 break;
             case 1:
-                nextButton.setBackgroundColor(getResources().getColor(R.color.colorNextButon1));
-                break;
-            case 2:
-                nextButton.setBackgroundColor(getResources().getColor(R.color.colorNextButon2));
-                break;
-            case 3:
-                nextButton.setBackgroundColor(getResources().getColor(R.color.colorNextButon3));
+                scopeButton.setBackgroundColor(getResources().getColor(R.color.colorNextButon1));
+                scopeButton.setText("大");
                 break;
             default:
-                nextButton.setBackgroundColor(getResources().getColor(R.color.colorNextButon0));
+                scopeButton.setBackgroundColor(getResources().getColor(R.color.colorNextButon0));
         }
-        // 我这里逆序查找，因为，一般后台的妖灵都比较好
-        if (jsonArray != null && jsonArray.length() > 0 && currentIndex > 0) {
-            currentIndex --;
-            try {
-                JSONObject currentPet = jsonArray.getJSONObject(currentIndex);
-                double  tmpNextLatitude = (double)currentPet.getInt("latitude") / (1000 * 1000);
-                double tmpNextLongtitude = (double)currentPet.getInt("longtitude") / (1000 * 1000);
-                GPS gps = gcj2gps84(tmpNextLatitude, tmpNextLongtitude);
-                final double nextLatitude = gps.getLat();
-                final double nextLongtitude = gps.getLon();
-                final int sprite_id = currentPet.getInt("sprite_id");
-                int gentime = currentPet.getInt("gentime");
-                int lifetime = currentPet.getInt("lifetime");
-                long currentTime = System.currentTimeMillis() / 1000;
-                if (petSet.contains(String.valueOf(sprite_id)) && (gentime + lifetime) > (currentTime + 2)) {
-                    Thread moveThread = new Thread(new Runnable() {
-                        @Override
-                        public void run() {
-                            final double latitudeStep = (nextLatitude - latitude) / 3000;
-                            final double longtitudeStep = (nextLongtitude - longtitude) / 3000;
-                            // 这里我想的是，用3秒走到对应的坐标
-                            for (int i = 0; i < 3000; i ++) {
-                                try {
-                                    Thread.sleep(1);
-                                } catch (InterruptedException e) {
-                                    e.printStackTrace();
-                                }
-                                latitude += latitudeStep;
-                                longtitude += longtitudeStep;
-                            }
-                            // 最后直接将要去的坐标进行赋值，保证是正确的位置
-                            latitude = nextLatitude;
-                            longtitude = nextLongtitude;
-                        }
-                    });
-                    moveThread.start();
-                } else {
-                    onClickNext();
-                }
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
-        } else {
-            getPets();
-        }
+        // 这里处理范围变化
     }
     private void setButtonClick(Button btn) {
         btn.setBackgroundColor(getResources().getColor(R.color.colorClick));

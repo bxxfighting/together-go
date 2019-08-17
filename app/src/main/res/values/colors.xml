@@ -3,4 +3,8 @@
     <color name="colorPrimary">#008577</color>
     <color name="colorPrimaryDark">#00574B</color>
     <color name="colorAccent">#96D81B</color>
+    <color name="colorClick">#00FA9A</color>
+    <color name="colorClickText">#FFFFFF</color>
+    <color name="colorUnClick">#00FFFF</color>
+    <color name="colorUnClickText">#000000</color>
 </resources>

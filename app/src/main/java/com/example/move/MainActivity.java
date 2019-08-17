@@ -66,6 +66,8 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
     private double pi = 3.1415926535897932384626;
     public double a = 6378245.0;
     public double ee = 0.00669342162296594323;
+    private float clickAlpha = (float)0.8;
+    private float unClickAlpha = (float)0.3;
     // 腾讯地图
     MapView mapView = null;
     TencentMap tencentMap = null;
@@ -284,6 +286,9 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
         Log.i("buffer", Arrays.toString(buffer));
         ByteString bytes = ByteString.of(buffer);
         Log.i("bytes", bytes.toString());
+        if (!wsManager.isWsConnected()) {
+            wsManager.startConnect();
+        }
         wsManager.sendMessage(bytes);
     }
 
@@ -320,7 +325,7 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
             eastButton = (Button) controllerView.findViewById(R.id.eastButton);
             southButton = (Button) controllerView.findViewById(R.id.southButton);
             westButton = (Button) controllerView.findViewById(R.id.westButton);
-            northButton.setAlpha((float)0.5);
+            onClickNorth();
             // 这里是控制移动速度的，有一个基础速度，然后根据速度条的位置增加相应的速度值
             // 因为这里调用了其它layout内的元素，所以需要用LayoutInflater获取到对应的layout再操作
             speedSeekBar = (SeekBar) controllerView.findViewById(R.id.speedSeekBar);
@@ -558,34 +563,54 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
             getPets();
         }
     }
+    private void setButtonClick(Button btn) {
+        btn.setBackgroundColor(getResources().getColor(R.color.colorClick));
+        btn.setTextColor(getResources().getColor(R.color.colorClickText));
+        btn.setAlpha(clickAlpha);
+    }
+    private void setButtonClick(Button[] btns) {
+        for (int i = 0; i < btns.length; i ++) {
+            btns[i].setBackgroundColor(getResources().getColor(R.color.colorClick));
+            btns[i].setTextColor(getResources().getColor(R.color.colorClickText));
+            btns[i].setAlpha(clickAlpha);
+        }
+    }
+    private void setButtonUnClick(Button btn) {
+        btn.setBackgroundColor(getResources().getColor(R.color.colorUnClick));
+        btn.setTextColor(getResources().getColor(R.color.colorUnClickText));
+        btn.setAlpha(unClickAlpha);
+    }
+    private void setButtonUnClick(Button[] btns) {
+        for (int i = 0; i < btns.length; i ++) {
+            btns[i].setBackgroundColor(getResources().getColor(R.color.colorUnClick));
+            btns[i].setTextColor(getResources().getColor(R.color.colorUnClickText));
+            btns[i].setAlpha(unClickAlpha);
+        }
+    }
     // 以下四个方法就是控制东南西北的，分别由不同方向按钮调用
     public void onClickNorth() {
         direct = 0;
-        northButton.setAlpha((float)0.5);
-        eastButton.setAlpha((float)1.0);
-        southButton.setAlpha((float)1.0);
-        westButton.setAlpha((float)1.0);
+        setButtonClick(northButton);
+        Button[] btns = {eastButton, southButton, westButton};
+        setButtonUnClick(btns);
     }
     public void onClickEast() {
         direct = 1;
-        eastButton.setAlpha((float)0.5);
-        northButton.setAlpha((float)1.0);
-        southButton.setAlpha((float)1.0);
-        westButton.setAlpha((float)1.0);
+        setButtonClick(eastButton);
+        Button[] btns = {northButton, southButton, westButton};
+        setButtonUnClick(btns);
     }
     public void onClickSouth() {
         direct = 2;
-        southButton.setAlpha((float)0.5);
-        eastButton.setAlpha((float)1.0);
-        northButton.setAlpha((float)1.0);
-        westButton.setAlpha((float)1.0);
+        setButtonClick(southButton);
+        Button[] btns = {eastButton, northButton, westButton};
+        setButtonUnClick(btns);
     }
     public void onClickWest() {
         direct = 3;
-        westButton.setAlpha((float)0.5);
-        southButton.setAlpha((float)1.0);
-        eastButton.setAlpha((float)1.0);
-        northButton.setAlpha((float)1.0);
+        setButtonClick(westButton);
+        Button[] btns = {eastButton, northButton, southButton};
+        setButtonUnClick(btns);
     }
     // 控制走与停的方法，由stopButton调用
     public void onClickOnOff() {

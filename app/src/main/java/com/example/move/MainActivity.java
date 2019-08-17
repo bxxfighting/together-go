@@ -137,6 +137,9 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
     private JSONArray jsonArray;
     // 记录当前查找到jsonArray中的哪个妖灵
     private int currentIndex = 0;
+    // 记录上次获取妖灵时使用的坐标
+    private double autoLatitude;
+    private double autoLongtitude;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -535,7 +538,51 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
             default:
                 autoButton.setBackgroundColor(getResources().getColor(R.color.colorNextButon0));
         }
-        getPets();
+        // 我这里逆序查找，因为，一般后台的妖灵都比较好
+        if (jsonArray != null && jsonArray.length() > 0 && currentIndex > 0) {
+            currentIndex --;
+            try {
+                JSONObject currentPet = jsonArray.getJSONObject(currentIndex);
+                double  tmpNextLatitude = (double)currentPet.getInt("latitude") / (1000 * 1000);
+                double tmpNextLongtitude = (double)currentPet.getInt("longtitude") / (1000 * 1000);
+                GPS gps = gcj2gps84(tmpNextLatitude, tmpNextLongtitude);
+                final double nextLatitude = gps.getLat();
+                final double nextLongtitude = gps.getLon();
+                final int sprite_id = currentPet.getInt("sprite_id");
+                int gentime = currentPet.getInt("gentime");
+                int lifetime = currentPet.getInt("lifetime");
+                long currentTime = System.currentTimeMillis() / 1000;
+                if (petSet.contains(String.valueOf(sprite_id)) && (gentime + lifetime) > (currentTime + 2)) {
+                    Thread moveThread = new Thread(new Runnable() {
+                        @Override
+                        public void run() {
+                            final double latitudeStep = (nextLatitude - latitude) / 3000;
+                            final double longtitudeStep = (nextLongtitude - longtitude) / 3000;
+                            // 这里我想的是，用3秒走到对应的坐标
+                            for (int i = 0; i < 3000; i ++) {
+                                try {
+                                    Thread.sleep(1);
+                                } catch (InterruptedException e) {
+                                    e.printStackTrace();
+                                }
+                                latitude += latitudeStep;
+                                longtitude += longtitudeStep;
+                            }
+                            // 最后直接将要去的坐标进行赋值，保证是正确的位置
+                            latitude = nextLatitude;
+                            longtitude = nextLongtitude;
+                        }
+                    });
+                    moveThread.start();
+                } else {
+                    onClickNext();
+                }
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+        } else {
+            getPets();
+        }
     }
     // 下一个
     public void onClickNext() {

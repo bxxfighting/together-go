@@ -81,8 +81,8 @@ android:layout_height="wrap_content">
             android:layout_height="50dp"
             android:background="#8D00BFFF"
             android:onClick="onClick"
-            android:id="@+id/nextButton"
-            android:text="下"
+            android:id="@+id/autoButton"
+            android:text="自"
             android:visibility="visible"
             tools:visibility="visible" />
         <Button
@@ -100,8 +100,8 @@ android:layout_height="wrap_content">
             android:layout_height="50dp"
             android:background="#8D00BFFF"
             android:onClick="onClick"
-            android:id="@+id/autoButton"
-            android:text="自"
+            android:id="@+id/nextButton"
+            android:text="下"
             android:visibility="visible"
             tools:visibility="visible" />
     </LinearLayout>

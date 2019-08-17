@@ -530,24 +530,19 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
                     Thread moveThread = new Thread(new Runnable() {
                                                        @Override
                                                        public void run() {
-                            final double latitudeStep = (nextLatitude - latitude) / 500;
-                            final double longtitudeStep = (nextLongtitude - longtitude) / 500;
-                            for (int i = 0; i < 500; i ++) {
+                            final double latitudeStep = (nextLatitude - latitude) / 3000;
+                            final double longtitudeStep = (nextLongtitude - longtitude) / 3000;
+                            // 这里我想的是，用3秒走到对应的坐标
+                            for (int i = 0; i < 3000; i ++) {
                                 try {
                                     Thread.sleep(1);
                                 } catch (InterruptedException e) {
                                     e.printStackTrace();
                                 }
                                 latitude += latitudeStep;
-                            }
-                            for (int i = 0; i < 500; i ++) {
-                                try {
-                                    Thread.sleep(1);
-                                } catch (InterruptedException e) {
-                                    e.printStackTrace();
-                                }
                                 longtitude += longtitudeStep;
                             }
+                            // 最后直接将要去的坐标进行赋值，保证是正确的位置
                             latitude = nextLatitude;
                             longtitude = nextLongtitude;
                     }

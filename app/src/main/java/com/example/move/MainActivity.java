@@ -1,14 +1,18 @@
 package com.example.move;
 
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.Context;
+import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.AssetManager;
 import android.graphics.BitmapFactory;
 import android.graphics.PixelFormat;
 import android.location.Location;
 import android.location.LocationManager;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.SystemClock;
@@ -57,8 +61,10 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
     private double pi = 3.1415926535897932384626;
     public double a = 6378245.0;
     public double ee = 0.00669342162296594323;
-    private float clickAlpha = (float)0.8;
-    private float unClickAlpha = (float)0.3;
+    private float clickButtonAlpha = (float)0.8;
+    private float unClickButtonAlpha = (float)0.3;
+    private float clickHeadAlpha = (float)1.0;
+    private float unclickHeadAlpha = (float)0.3;
     private DisplayMetrics metrics;
     // 腾讯地图
     MapView mapView = null;
@@ -96,6 +102,8 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
     private Button southButton;
     private Button westButton;
     private Button backButton;
+    private Button nextButton;
+    private int nextCount = 0;
     // 判断控制器是收起还是展开
     private int isBack = 0;
 
@@ -140,12 +148,19 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
     }
 
     private void init() {
+        initPermission();
         initMap();
-        initLocation();
         initMoveManager();
+        initLocation();
         initWebsocket();
         initController();
         initFilter();
+    }
+    private void initPermission() {
+        // 定位权限
+        // 模拟定位权限
+        // 悬浮窗权限
+        // 三种权限都是必须权限
     }
 
     // 初始化腾讯地图的一些信息
@@ -168,12 +183,21 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
 
     // 初始化模拟定位的一些信息
     private void initMoveManager() {
+        if (Build.VERSION.SDK_INT < 23) {
+            if (Settings.Secure.getInt(this.getContentResolver(), Settings.Secure.ALLOW_MOCK_LOCATION, 0) == 0) {
+                simulateLocationPermission();
+            }
+        }
         random = new Random();
-        locationManager = (LocationManager)getSystemService(Context.LOCATION_SERVICE);
-        locationManager.addTestProvider(LocationManager.GPS_PROVIDER, false,
-                true, false, false, true,
-                true, true, 0, 5);
-        locationManager.setTestProviderEnabled(LocationManager.GPS_PROVIDER, true);
+        try {
+            locationManager = (LocationManager)getSystemService(Context.LOCATION_SERVICE);
+            locationManager.addTestProvider(LocationManager.GPS_PROVIDER, false,
+                    true, false, false, true,
+                    true, true, 0, 5);
+            locationManager.setTestProviderEnabled(LocationManager.GPS_PROVIDER, true);
+        } catch (SecurityException e) {
+            simulateLocationPermission();
+        }
     }
 
     // 初始化websocket
@@ -274,6 +298,12 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
 
     // 这里主要是设置悬浮窗的一些配置
     private void initController() {
+        // 这里需要有悬浮窗的权限
+        if (Build.VERSION.SDK_INT >= 23) {
+            if (!Settings.canDrawOverlays(getApplicationContext())) {
+                floatWindowPermission();
+            }
+        }
         windowManager = (WindowManager) getSystemService(WINDOW_SERVICE);
         controllerLayoutParams = new WindowManager.LayoutParams();
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -300,6 +330,7 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
             LayoutInflater layoutInflater = LayoutInflater.from(this);
             controllerView = layoutInflater.inflate(R.layout.activity_controller, null);
             stopButton = (Button) controllerView.findViewById(R.id.stopButton);
+            nextButton = (Button) controllerView.findViewById(R.id.nextButton);
             backButton = (Button) controllerView.findViewById(R.id.backButton);
             northButton = (Button) controllerView.findViewById(R.id.northButton);
             eastButton = (Button) controllerView.findViewById(R.id.eastButton);
@@ -400,9 +431,9 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
             int imageId = Integer.valueOf(headImages[i].substring(0, headImages[i].indexOf(".")));
             imgView.setId(imageId);
             if (petSet.contains(String.valueOf(imageId))) {
-                imgView.setAlpha((float)1.0);
+                imgView.setAlpha(clickHeadAlpha);
             } else {
-                imgView.setAlpha((float)0.3);
+                imgView.setAlpha(unclickHeadAlpha);
             }
             imgView.setOnClickListener(new View.OnClickListener() {
                 @Override
@@ -410,10 +441,10 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
                     int imageId = view.getId();
                     if (petSet.contains(String.valueOf(imageId))) {
                         petSet.remove(String.valueOf(imageId));
-                        view.setAlpha((float)0.3);
+                        view.setAlpha(unclickHeadAlpha);
                     } else {
                         petSet.add(String.valueOf(imageId));
-                        view.setAlpha((float)1.0);
+                        view.setAlpha(clickHeadAlpha);
                     }
                     editor.putStringSet("selected", petSet);
                     editor.commit();
@@ -486,6 +517,23 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
     }
     // 下一个
     public void onClickNext() {
+        nextCount ++;
+        switch (nextCount % 4) {
+            case 0:
+                nextButton.setBackgroundColor(getResources().getColor(R.color.colorNextButon0));
+                break;
+            case 1:
+                nextButton.setBackgroundColor(getResources().getColor(R.color.colorNextButon1));
+                break;
+            case 2:
+                nextButton.setBackgroundColor(getResources().getColor(R.color.colorNextButon2));
+                break;
+            case 3:
+                nextButton.setBackgroundColor(getResources().getColor(R.color.colorNextButon3));
+                break;
+            default:
+                nextButton.setBackgroundColor(getResources().getColor(R.color.colorNextButon0));
+        }
         // 我这里逆序查找，因为，一般后台的妖灵都比较好
         if (jsonArray != null && jsonArray.length() > 0 && currentIndex > 0) {
             currentIndex --;
@@ -535,25 +583,25 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
     private void setButtonClick(Button btn) {
         btn.setBackgroundColor(getResources().getColor(R.color.colorClick));
         btn.setTextColor(getResources().getColor(R.color.colorClickText));
-        btn.setAlpha(clickAlpha);
+        btn.setAlpha(clickButtonAlpha);
     }
     private void setButtonClick(Button[] btns) {
         for (int i = 0; i < btns.length; i ++) {
             btns[i].setBackgroundColor(getResources().getColor(R.color.colorClick));
             btns[i].setTextColor(getResources().getColor(R.color.colorClickText));
-            btns[i].setAlpha(clickAlpha);
+            btns[i].setAlpha(clickButtonAlpha);
         }
     }
     private void setButtonUnClick(Button btn) {
         btn.setBackgroundColor(getResources().getColor(R.color.colorUnClick));
         btn.setTextColor(getResources().getColor(R.color.colorUnClickText));
-        btn.setAlpha(unClickAlpha);
+        btn.setAlpha(unClickButtonAlpha);
     }
     private void setButtonUnClick(Button[] btns) {
         for (int i = 0; i < btns.length; i ++) {
             btns[i].setBackgroundColor(getResources().getColor(R.color.colorUnClick));
             btns[i].setTextColor(getResources().getColor(R.color.colorUnClickText));
-            btns[i].setAlpha(unClickAlpha);
+            btns[i].setAlpha(unClickButtonAlpha);
         }
     }
     // 以下四个方法就是控制东南西北的，分别由不同方向按钮调用
@@ -733,5 +781,54 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
         ret += (20.0 * Math.sin(x * pi) + 40.0 * Math.sin(x / 3.0 * pi)) * 2.0 / 3.0;
         ret += (150.0 * Math.sin(x / 12.0 * pi) + 300.0 * Math.sin(x / 30.0 * pi)) * 2.0 / 3.0;
         return ret;
+    }
+
+    // 悬浮窗提示
+    private void floatWindowPermission() {
+        new AlertDialog.Builder(this)
+                .setTitle("启用悬浮窗")
+                .setMessage(("必须开启此权限"))
+                .setPositiveButton("设置",
+                        new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialogInterface, int i) {
+                                try {
+                                    Intent intent = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:" + getPackageName()));
+                                    startActivity(intent);
+                                } catch (Exception e) {
+                                    e.printStackTrace();
+                                }
+                            }
+                        })
+                .setNegativeButton("取消", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i) {
+                    }
+                })
+                .show();
+    }
+
+    // 模拟定位的权限
+    private void simulateLocationPermission() {
+        new AlertDialog.Builder(this)
+                .setTitle("启用模拟位置")
+                .setMessage("在开发者选项中模拟位置应用选择此程序")
+                .setPositiveButton("设置", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i) {
+                        try {
+                            Intent intent = new Intent(Settings.ACTION_APPLICATION_DEVELOPMENT_SETTINGS);
+                            startActivity(intent);
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                    }
+                })
+                .setNegativeButton("取消", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i) {
+                    }
+                })
+                .show();
     }
 }

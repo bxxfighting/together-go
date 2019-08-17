@@ -220,6 +220,7 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
                     currentIndex = jsonArray.length() - 1;
                     Toast toast = Toast.makeText(getApplicationContext(), "来了", Toast.LENGTH_SHORT);
                     toast.show();
+                    onClickNext();
                     Log.i("jsonArray", jsonArray.toString());
                 } catch (JSONException e) {
                     e.printStackTrace();

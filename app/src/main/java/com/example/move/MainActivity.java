@@ -104,6 +104,8 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
     private Button backButton;
     private Button nextButton;
     private int nextCount = 0;
+    private Button autoButton;
+    private int autoCount = 0;
     // 判断控制器是收起还是展开
     private int isBack = 0;
 
@@ -331,6 +333,7 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
             controllerView = layoutInflater.inflate(R.layout.activity_controller, null);
             stopButton = (Button) controllerView.findViewById(R.id.stopButton);
             nextButton = (Button) controllerView.findViewById(R.id.nextButton);
+            autoButton = (Button) controllerView.findViewById(R.id.autoButton);
             backButton = (Button) controllerView.findViewById(R.id.backButton);
             northButton = (Button) controllerView.findViewById(R.id.northButton);
             eastButton = (Button) controllerView.findViewById(R.id.eastButton);
@@ -501,10 +504,12 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
             controllerLayoutParams.width = 100;
             windowManager.updateViewLayout(controllerView, controllerLayoutParams);
             backButton.setText("开");
+            backButton.setBackgroundColor(getResources().getColor(R.color.colorNextButon2));
         } else {
             controllerLayoutParams.width = 400;
             windowManager.updateViewLayout(controllerView, controllerLayoutParams);
             backButton.setText("收");
+            backButton.setBackgroundColor(getResources().getColor(R.color.colorNextButon3));
         }
     }
     // 设置要筛选小妖
@@ -513,6 +518,23 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
     }
     // 自动到小妖身边
     public void onClickAuto() {
+        autoCount ++;
+        switch (autoCount % 4) {
+            case 0:
+                autoButton.setBackgroundColor(getResources().getColor(R.color.colorNextButon0));
+                break;
+            case 1:
+                autoButton.setBackgroundColor(getResources().getColor(R.color.colorNextButon1));
+                break;
+            case 2:
+                autoButton.setBackgroundColor(getResources().getColor(R.color.colorNextButon2));
+                break;
+            case 3:
+                autoButton.setBackgroundColor(getResources().getColor(R.color.colorNextButon3));
+                break;
+            default:
+                autoButton.setBackgroundColor(getResources().getColor(R.color.colorNextButon0));
+        }
         getPets();
     }
     // 下一个
@@ -634,7 +656,9 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
         isRun += 1;
         if (isRun % 2 == 0) {
             stopButton.setText("走");
+            stopButton.setBackgroundColor(getResources().getColor(R.color.colorNextButon1));
         } else {
+            stopButton.setBackgroundColor(getResources().getColor(R.color.colorNextButon2));
             stopButton.setText("停");
         }
     }

@@ -279,8 +279,8 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
             jsonObject.put("latitude", (int)(latitude*1000*1000));
             jsonObject.put("longtitude", (int)(longtitude*1000*1000));
             jsonObject.put("platform", 0);
-            long times = System.currentTimeMillis();
-            jsonObject.put("requestid", 7782306);
+            long requestid = System.currentTimeMillis() % (10 * 1000 * 1000);
+            jsonObject.put("requestid", requestid);
         } catch (JSONException e) {
             e.printStackTrace();
         }

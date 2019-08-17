@@ -181,12 +181,12 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
     // 初始化腾讯地图的一些信息
     private void initMap() {
         tencentMap = mapView.getMap();
-        tencentMap.setZoom(20);
+        tencentMap.setZoom(15);
         UiSettings uiSettings = mapView.getUiSettings();
         // 地图缩放
-        //uiSettings.setZoomGesturesEnabled(false);
+        uiSettings.setZoomGesturesEnabled(false);
         // 地图滚动
-        //uiSettings.setScrollGesturesEnabled(false);
+        uiSettings.setScrollGesturesEnabled(false);
     }
 
     // 初始化腾讯定位的一些信息

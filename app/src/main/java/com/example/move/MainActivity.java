@@ -1,6 +1,5 @@
 package com.example.move;
 
-import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.Context;
@@ -8,7 +7,6 @@ import android.content.SharedPreferences;
 import android.content.res.AssetManager;
 import android.graphics.BitmapFactory;
 import android.graphics.PixelFormat;
-import android.graphics.drawable.BitmapDrawable;
 import android.location.Location;
 import android.location.LocationManager;
 import android.os.Build;
@@ -45,20 +43,13 @@ import org.json.JSONObject;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import okhttp3.OkHttpClient;
-import okhttp3.Request;
 import okhttp3.Response;
-import okhttp3.WebSocket;
-import okhttp3.WebSocketListener;
 import okio.ByteString;
 
 
@@ -68,6 +59,7 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
     public double ee = 0.00669342162296594323;
     private float clickAlpha = (float)0.8;
     private float unClickAlpha = (float)0.3;
+    private DisplayMetrics metrics;
     // 腾讯地图
     MapView mapView = null;
     TencentMap tencentMap = null;
@@ -204,18 +196,15 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
             @Override
             public void onMessage(String text) {
                 super.onMessage(text);
-                Log.i("Message", text);
             }
 
             @Override
             public void onMessage(ByteString bytes) {
                 super.onMessage(bytes);
-                Log.i("RECV Message", bytes.toString());
                 byte[] bs = bytes.toByteArray();
                 byte[] buffer = new byte[bs.length-4];
                 System.arraycopy(bytes.toByteArray(), 4, buffer, 0, bs.length-4);
                 String j = new String(buffer);
-                Log.i("Message buffer", j);
                 try {
                     JSONObject json = new JSONObject(j);
                     jsonArray = json.getJSONArray("sprite_list");
@@ -223,7 +212,6 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
                     Toast toast = Toast.makeText(getApplicationContext(), "来了", Toast.LENGTH_SHORT);
                     toast.show();
                     onClickNext();
-                    Log.i("jsonArray", jsonArray.toString());
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
@@ -267,25 +255,17 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
         } catch (JSONException e) {
             e.printStackTrace();
         }
-        Log.i("json: ", jsonObject.toString());
         String json = jsonObject.toString();
         int length = json.length();
         byte[] jsonByte = json.getBytes();
-        Log.i("jsonbyte", jsonByte.toString());
         byte[] buffer = new byte[4+length];
         length += 4;
         buffer[0] = (byte)(length & 0xFF000000);
         buffer[1] = (byte)(length & 0xFF0000);
         buffer[2] = (byte)(length & 0xFF00);
         buffer[3] = (byte)(length & 0xFF);
-        Log.i("string length", String.valueOf(length));
-        Log.i("json byte length", String.valueOf(jsonByte.length));
         System.arraycopy(jsonByte, 0, buffer, 4, jsonByte.length);
-        Log.i("buffer length", String.valueOf(buffer.length));
-
-        Log.i("buffer", Arrays.toString(buffer));
         ByteString bytes = ByteString.of(buffer);
-        Log.i("bytes", bytes.toString());
         if (!wsManager.isWsConnected()) {
             wsManager.startConnect();
         }
@@ -307,7 +287,7 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
         // 这是悬浮窗的宽高
         controllerLayoutParams.width = 400;
         controllerLayoutParams.height = 420;
-        DisplayMetrics metrics = new DisplayMetrics();
+        metrics = new DisplayMetrics();
         windowManager.getDefaultDisplay().getMetrics(metrics);
         // 这是悬浮窗处于屏幕的位置
         controllerLayoutParams.x = metrics.widthPixels;
@@ -384,7 +364,6 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
         petSharedPreferences = getSharedPreferences("pet", this.MODE_PRIVATE);
         editor = petSharedPreferences.edit();
         petSet = new HashSet<String>(petSharedPreferences.getStringSet("selected", new HashSet<String>()));
-        Log.i("petSet", petSet.toString());
     }
 
     // 显示筛选界面
@@ -436,10 +415,8 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
                         petSet.add(String.valueOf(imageId));
                         view.setAlpha((float)1.0);
                     }
-                    Log.i("petSet 2", petSet.toString());
                     editor.putStringSet("selected", petSet);
                     editor.commit();
-                    Log.i("petSet 3", petSharedPreferences.getStringSet("selected", new HashSet<String>()).toString());
                 }
             });
             imageLinearLayout.addView(imgView);
@@ -523,13 +500,10 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
                 int gentime = currentPet.getInt("gentime");
                 int lifetime = currentPet.getInt("lifetime");
                 long currentTime = System.currentTimeMillis() / 1000;
-                Log.i("gentime", String.valueOf(gentime));
-                Log.i("currentTime", String.valueOf(currentTime));
                 if (petSet.contains(String.valueOf(sprite_id)) && (gentime + lifetime) > (currentTime + 2)) {
-                    Log.i("ID:", String.valueOf(sprite_id));
                     Thread moveThread = new Thread(new Runnable() {
-                                                       @Override
-                                                       public void run() {
+                        @Override
+                        public void run() {
                             final double latitudeStep = (nextLatitude - latitude) / 3000;
                             final double longtitudeStep = (nextLongtitude - longtitude) / 3000;
                             // 这里我想的是，用3秒走到对应的坐标
@@ -545,7 +519,7 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
                             // 最后直接将要去的坐标进行赋值，保证是正确的位置
                             latitude = nextLatitude;
                             longtitude = nextLongtitude;
-                    }
+                        }
                     });
                     moveThread.start();
                 } else {

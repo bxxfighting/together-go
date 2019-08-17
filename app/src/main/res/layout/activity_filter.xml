@@ -6,7 +6,7 @@
         android:layout_width="60dp"
         android:layout_height="60dp"
         android:onClick="onClick"
-        android:background="#8D00BFFF"
+        android:background="@color/colorCloseButton"
         android:id="@+id/closeFilterButton"
         android:text="关闭"/>
     <LinearLayout

@@ -371,7 +371,7 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
         controllerLayoutParams.flags = WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE;
         controllerLayoutParams.gravity = Gravity.START | Gravity.TOP;
         // 这是悬浮窗的宽高
-        controllerLayoutParams.width = 300;
+        controllerLayoutParams.width = 260;
         controllerLayoutParams.height = 540;
         metrics = new DisplayMetrics();
         windowManager.getDefaultDisplay().getMetrics(metrics);
@@ -551,13 +551,13 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
     public void onClickBack() {
         isBack += 1;
         if (isBack % 2 == 1) {
-            controllerLayoutParams.width = 300 / 2 - 25;
-            controllerLayoutParams.height = (300 / 2 - 25) * 2;
+            controllerLayoutParams.width = 260 / 2 -10;
+            controllerLayoutParams.height = (260 / 2 - 10) * 2;
             windowManager.updateViewLayout(controllerView, controllerLayoutParams);
             backButton.setText("开");
             backButton.setBackgroundColor(getResources().getColor(R.color.colorNextButon2));
         } else {
-            controllerLayoutParams.width = 300;
+            controllerLayoutParams.width = 260;
             controllerLayoutParams.height = 540;
             windowManager.updateViewLayout(controllerView, controllerLayoutParams);
             backButton.setText("收");

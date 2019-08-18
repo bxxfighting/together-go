@@ -70,6 +70,7 @@
         <SeekBar
             android:id="@+id/speedSeekBar"
             android:layout_width="100dp"
-            android:layout_height="10dp" />
+            android:layout_gravity="center"
+            android:layout_height="40dp" />
     </LinearLayout>
 </LinearLayout>

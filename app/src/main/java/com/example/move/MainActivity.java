@@ -37,7 +37,10 @@ import com.tencent.map.geolocation.TencentLocation;
 import com.tencent.map.geolocation.TencentLocationListener;
 import com.tencent.map.geolocation.TencentLocationManager;
 import com.tencent.map.geolocation.TencentLocationRequest;
+import com.tencent.mapsdk.raster.model.BitmapDescriptorFactory;
 import com.tencent.mapsdk.raster.model.LatLng;
+import com.tencent.mapsdk.raster.model.Marker;
+import com.tencent.mapsdk.raster.model.MarkerOptions;
 import com.tencent.tencentmap.mapsdk.map.MapView;
 import com.tencent.tencentmap.mapsdk.map.TencentMap;
 import com.tencent.tencentmap.mapsdk.map.UiSettings;
@@ -73,6 +76,8 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
     // 腾讯地图
     MapView mapView = null;
     TencentMap tencentMap = null;
+    private Marker marker;
+    private boolean firstLocation = true;
     // 腾讯定位
     TencentLocationManager tencentLocationManager;
     TencentLocationRequest tencentLocationRequest;
@@ -182,9 +187,13 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
         tencentMap.setZoom(15);
         UiSettings uiSettings = mapView.getUiSettings();
         // 地图缩放
-        uiSettings.setZoomGesturesEnabled(false);
+        // uiSettings.setZoomGesturesEnabled(false);
         // 地图滚动
-        uiSettings.setScrollGesturesEnabled(false);
+        // uiSettings.setScrollGesturesEnabled(false);
+        marker = tencentMap.addMarker(new MarkerOptions()
+        .anchor(0.5f, 0.5f)
+        .icon(BitmapDescriptorFactory.defaultMarker())
+        .draggable(true));
     }
 
     // 初始化腾讯定位的一些信息
@@ -673,7 +682,12 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
             Toast toast = Toast.makeText(getApplicationContext(), "定位成功", Toast.LENGTH_SHORT);
             toast.show();
         }
-        tencentMap.setCenter(new LatLng(latitude, longtitude));
+
+        marker.setPosition(new LatLng(latitude, longtitude));
+        if (firstLocation) {
+            firstLocation = false;
+            tencentMap.setCenter(new LatLng(latitude, longtitude));
+        }
     }
 
     @Override

@@ -1,12 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    android:orientation="vertical" android:layout_width="wrap_content"
-android:layout_height="wrap_content">
+    xmlns:kongqw="http://schemas.android.com/apk/res-auto"
+    android:orientation="vertical"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content">
 
     <LinearLayout
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content">
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
 
         <Button
             android:layout_width="50dp"
@@ -15,16 +18,6 @@ android:layout_height="wrap_content">
             android:onClick="onClick"
             android:id="@+id/backButton"
             android:text="收"
-            android:visibility="visible"
-            tools:visibility="visible" />
-        <Button
-            android:layout_width="50dp"
-            android:layout_height="50dp"
-            android:background="@color/colorClick"
-            android:textColor="@color/colorClickText"
-            android:onClick="onClick"
-            android:id="@+id/northButton"
-            android:text="北"
             android:visibility="visible"
             tools:visibility="visible" />
         <Button
@@ -39,43 +32,8 @@ android:layout_height="wrap_content">
     </LinearLayout>
     <LinearLayout
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content">
-
-        <Button
-            android:layout_width="50dp"
-            android:layout_height="50dp"
-            android:background="@color/colorUnClick"
-            android:textColor="@color/colorUnClickText"
-            android:onClick="onClick"
-            android:id="@+id/westButton"
-            android:text="西"
-            android:visibility="visible"
-            tools:visibility="visible" />
-
-        <Button
-            android:layout_width="50dp"
-            android:layout_height="50dp"
-            android:background="#8D00FFFF"
-            android:onClick="onClick"
-            android:id="@+id/stopButton"
-            android:text="走"
-            android:visibility="visible"
-            tools:visibility="visible" />
-
-        <Button
-            android:layout_width="50dp"
-            android:layout_height="50dp"
-            android:background="@color/colorUnClick"
-            android:textColor="@color/colorUnClickText"
-            android:onClick="onClick"
-            android:id="@+id/eastButton"
-            android:text="东"
-            android:visibility="visible"
-            tools:visibility="visible" />
-    </LinearLayout>
-    <LinearLayout
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content">
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
         <Button
             android:layout_width="50dp"
             android:layout_height="50dp"
@@ -88,32 +46,30 @@ android:layout_height="wrap_content">
         <Button
             android:layout_width="50dp"
             android:layout_height="50dp"
-            android:background="@color/colorUnClick"
-            android:textColor="@color/colorUnClickText"
+            android:background="#8D00FFFF"
             android:onClick="onClick"
-            android:id="@+id/southButton"
-            android:text="南"
-            android:visibility="visible"
-            tools:visibility="visible" />
-        <Button
-            android:layout_width="50dp"
-            android:layout_height="50dp"
-            android:background="#8D00BFFF"
-            android:onClick="onClick"
-            android:id="@+id/scopeButton"
-            android:text="小"
+            android:id="@+id/stopButton"
+            android:text="走"
             android:visibility="visible"
             tools:visibility="visible" />
     </LinearLayout>
-
     <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content">
-
+        <com.kongqw.rockerlibrary.view.RockerView
+            android:id="@+id/rockerView"
+            android:layout_width="100dp"
+            android:layout_height="100dp"
+            kongqw:areaBackground="#AFEEEEEE"
+            kongqw:rockerBackground="#999999"
+            kongqw:rockerRadius="20dp" />
+    </LinearLayout>
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content">
         <SeekBar
             android:id="@+id/speedSeekBar"
-            android:layout_width="150dp"
-            android:layout_height="20dp" />
+            android:layout_width="100dp"
+            android:layout_height="10dp" />
     </LinearLayout>
-
 </LinearLayout>

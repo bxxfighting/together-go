@@ -31,4 +31,5 @@ dependencies {
     implementation files('libs/TencentLocationSdk_v7.1.7_r02c4bb5a_20190523_115148.jar')
     implementation 'com.squareup.okhttp3:okhttp:3.8.1'
     implementation 'com.rabtman.wsmanager:wsmanager:1.0.2'
+    implementation 'com.github.kongqw:AndroidRocker:1.0.1'
 }

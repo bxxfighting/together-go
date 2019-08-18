@@ -30,6 +30,7 @@ import android.widget.SeekBar;
 import android.widget.LinearLayout.LayoutParams;
 import android.widget.Toast;
 
+import com.kongqw.rockerlibrary.view.RockerView;
 import com.rabtman.wsmanager.WsManager;
 import com.rabtman.wsmanager.listener.WsStatusListener;
 import com.tencent.map.geolocation.TencentLocation;
@@ -100,18 +101,15 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
     // 控制器上的功能组件
     private SeekBar speedSeekBar;
     private Button stopButton;
-    private Button northButton;
-    private Button eastButton;
-    private Button southButton;
-    private Button westButton;
     private Button backButton;
-    private Button scopeButton;
     // 定位范围
     private int scope = 0;
     private Button autoButton;
     private int autoCount = 0;
     // 判断控制器是收起还是展开
     private int isBack = 0;
+    private RockerView rockerView;
+    private double angle = 0;
 
     // 悬浮效果控制器
     private WindowManager windowManager;
@@ -364,8 +362,8 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
         controllerLayoutParams.flags = WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE;
         controllerLayoutParams.gravity = Gravity.START | Gravity.TOP;
         // 这是悬浮窗的宽高
-        controllerLayoutParams.width = 400;
-        controllerLayoutParams.height = 420;
+        controllerLayoutParams.width = 300;
+        controllerLayoutParams.height = 540;
         metrics = new DisplayMetrics();
         windowManager.getDefaultDisplay().getMetrics(metrics);
         // 这是悬浮窗处于屏幕的位置
@@ -378,15 +376,9 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
             // 这就是去获取activity_controller，这样才能用它里面的元素
             LayoutInflater layoutInflater = LayoutInflater.from(this);
             controllerView = layoutInflater.inflate(R.layout.activity_controller, null);
-            stopButton = (Button) controllerView.findViewById(R.id.stopButton);
-            scopeButton = (Button) controllerView.findViewById(R.id.scopeButton);
-            autoButton = (Button) controllerView.findViewById(R.id.autoButton);
-            backButton = (Button) controllerView.findViewById(R.id.backButton);
-            northButton = (Button) controllerView.findViewById(R.id.northButton);
-            eastButton = (Button) controllerView.findViewById(R.id.eastButton);
-            southButton = (Button) controllerView.findViewById(R.id.southButton);
-            westButton = (Button) controllerView.findViewById(R.id.westButton);
-            onClickNorth();
+            stopButton = controllerView.findViewById(R.id.stopButton);
+            autoButton = controllerView.findViewById(R.id.autoButton);
+            backButton = controllerView.findViewById(R.id.backButton);
             // 这里是控制移动速度的，有一个基础速度，然后根据速度条的位置增加相应的速度值
             // 因为这里调用了其它layout内的元素，所以需要用LayoutInflater获取到对应的layout再操作
             speedSeekBar = (SeekBar) controllerView.findViewById(R.id.speedSeekBar);
@@ -403,6 +395,23 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
 
                 @Override
                 public void onStopTrackingTouch(SeekBar seekBar) {
+
+                }
+            });
+            rockerView = controllerView.findViewById(R.id.rockerView);
+            rockerView.setCallBackMode(RockerView.CallBackMode.CALL_BACK_MODE_STATE_CHANGE);
+            rockerView.setOnAngleChangeListener(new RockerView.OnAngleChangeListener() {
+                @Override
+                public void onStart() {
+                }
+
+                @Override
+                public void angle(double v) {
+                    angle = v;
+                }
+
+                @Override
+                public void onFinish() {
 
                 }
             });
@@ -510,18 +519,6 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
 
     public void onClick(View view) {
         switch (view.getId()) {
-            case R.id.northButton:
-                onClickNorth();
-                break;
-            case R.id.eastButton:
-                onClickEast();
-                break;
-            case R.id.southButton:
-                onClickSouth();
-                break;
-            case R.id.westButton:
-                onClickWest();
-                break;
             case R.id.stopButton:
                 onClickOnOff();
                 break;
@@ -534,9 +531,6 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
             case R.id.autoButton:
                 onClickAuto();
                 break;
-            case R.id.scopeButton:
-                onClickScope();
-                break;
             case R.id.closeFilterButton:
                 removeFilter();
                 break;
@@ -548,12 +542,14 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
     public void onClickBack() {
         isBack += 1;
         if (isBack % 2 == 1) {
-            controllerLayoutParams.width = 400 / 3 - 10;
+            controllerLayoutParams.width = 300 / 2 - 25;
+            controllerLayoutParams.height = (300 / 2 - 25) * 2;
             windowManager.updateViewLayout(controllerView, controllerLayoutParams);
             backButton.setText("开");
             backButton.setBackgroundColor(getResources().getColor(R.color.colorNextButon2));
         } else {
-            controllerLayoutParams.width = 400;
+            controllerLayoutParams.width = 300;
+            controllerLayoutParams.height = 540;
             windowManager.updateViewLayout(controllerView, controllerLayoutParams);
             backButton.setText("收");
             backButton.setBackgroundColor(getResources().getColor(R.color.colorNextButon3));
@@ -631,23 +627,6 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
             getPets();
         }
     }
-    // 更改查找范围
-    public void onClickScope() {
-        scope ++;
-        switch (scope % 2) {
-            case 0:
-                scopeButton.setBackgroundColor(getResources().getColor(R.color.colorNextButon0));
-                scopeButton.setText("小");
-                break;
-            case 1:
-                scopeButton.setBackgroundColor(getResources().getColor(R.color.colorNextButon1));
-                scopeButton.setText("大");
-                break;
-            default:
-                scopeButton.setBackgroundColor(getResources().getColor(R.color.colorNextButon0));
-        }
-        // 这里处理范围变化
-    }
     private void setButtonClick(Button btn) {
         btn.setBackgroundColor(getResources().getColor(R.color.colorClick));
         btn.setTextColor(getResources().getColor(R.color.colorClickText));
@@ -671,31 +650,6 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
             btns[i].setTextColor(getResources().getColor(R.color.colorUnClickText));
             btns[i].setAlpha(unClickButtonAlpha);
         }
-    }
-    // 以下四个方法就是控制东南西北的，分别由不同方向按钮调用
-    public void onClickNorth() {
-        direct = 0;
-        setButtonClick(northButton);
-        Button[] btns = {eastButton, southButton, westButton};
-        setButtonUnClick(btns);
-    }
-    public void onClickEast() {
-        direct = 1;
-        setButtonClick(eastButton);
-        Button[] btns = {northButton, southButton, westButton};
-        setButtonUnClick(btns);
-    }
-    public void onClickSouth() {
-        direct = 2;
-        setButtonClick(southButton);
-        Button[] btns = {eastButton, northButton, westButton};
-        setButtonUnClick(btns);
-    }
-    public void onClickWest() {
-        direct = 3;
-        setButtonClick(westButton);
-        Button[] btns = {eastButton, northButton, southButton};
-        setButtonUnClick(btns);
     }
     // 控制走与停的方法，由stopButton调用
     public void onClickOnOff() {
@@ -779,20 +733,37 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
                     if (isRun % 2 == 1) {
                         // 这里设置四个方向，北：0、东：1、南：2、西：3
                         // 改变了方向就改变经纬度的变化策略
-                        switch (direct % 4) {
-                            case 0:
-                                latitude += speed;
-                                break;
-                            case 1:
-                                longtitude += speed;
-                                break;
-                            case 2:
-                                latitude -= speed;
-                                break;
-                            case 3:
-                                longtitude -= speed;
-                                break;
+                        if ( angle >= 0 && angle < 90) {
+                            double radinas = Math.toRadians(angle);
+                            latitude -= Math.sin(radinas) * speed;
+                            longtitude += Math.cos(radinas) * speed;
+                        } else if (angle >= 90 && angle < 180) {
+                            double radinas = Math.toRadians(180 - angle);
+                            latitude -= Math.sin(radinas) * speed;
+                            longtitude -= Math.cos(radinas) * speed;
+                        } else if (angle >= 180 && angle < 270) {
+                            double radinas = Math.toRadians(angle - 180);
+                            latitude += Math.sin(radinas) * speed;
+                            longtitude -= Math.cos(radinas) * speed;
+                        } else {
+                            double radinas = Math.toRadians(360 - angle);
+                            latitude += Math.sin(radinas) * speed;
+                            longtitude += Math.cos(radinas) * speed;
                         }
+                        // switch (direct % 4) {
+                        //     case 0:
+                        //         latitude += speed;
+                        //         break;
+                        //     case 1:
+                        //         longtitude += speed;
+                        //         break;
+                        //     case 2:
+                        //         latitude -= speed;
+                        //         break;
+                        //     case 3:
+                        //         longtitude -= speed;
+                        //         break;
+                        // }
                     }
                     setLocation(longtitude, latitude);
                 }

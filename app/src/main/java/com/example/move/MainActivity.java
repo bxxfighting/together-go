@@ -412,9 +412,9 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
         filterLayoutParams.width = metrics.widthPixels;
         filterLayoutParams.height = metrics.heightPixels;
         // 这是悬浮窗处于屏幕的位置
-        filterLayoutParams.x = 0;
-        filterLayoutParams.y = 0;
-        headLayoutParams = new LayoutParams(80, 80);
+        int width = (metrics.widthPixels - 110) / 10;
+        int height = width;
+        headLayoutParams = new LayoutParams(width, height);
         headLayoutParams.setMargins(5, 5, 5, 5);
 
         // 获取assets下的小妖头像
@@ -425,6 +425,10 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
         } catch(IOException e) {
             e.printStackTrace();
         }
+        int col = (int)Math.ceil(headImages.length / 10);
+        filterLayoutParams.x = 5;
+        filterLayoutParams.y = (metrics.heightPixels - col * 10 - width * col) / 2 - 150;
+        filterLayoutParams.height = col * 10 + width * col + 300;
         // 记录小妖当前是否被选，以小妖id为key，false为未选、true为已选
         petSharedPreferences = getSharedPreferences("pet", this.MODE_PRIVATE);
         editor = petSharedPreferences.edit();

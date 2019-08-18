@@ -2,13 +2,6 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:orientation="vertical" android:layout_width="match_parent"
     android:layout_height="match_parent">
-    <Button
-        android:layout_width="60dp"
-        android:layout_height="60dp"
-        android:onClick="onClick"
-        android:background="@color/colorCloseButton"
-        android:id="@+id/closeFilterButton"
-        android:text="关闭"/>
     <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -16,4 +9,12 @@
         android:background="#FFeeeeee"
         android:orientation="vertical" >
     </LinearLayout>
+    <Button
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:onClick="onClick"
+        android:layout_gravity="center"
+        android:background="@color/colorCloseButton"
+        android:id="@+id/closeFilterButton"
+        android:text="关闭"/>
 </LinearLayout>

@@ -557,13 +557,11 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
             controllerLayoutParams.height = (260 / 2 - 10) * 2;
             windowManager.updateViewLayout(controllerView, controllerLayoutParams);
             backButton.setText("开");
-            // backButton.setBackgroundColor(getResources().getColor(R.color.colorNextButon2));
         } else {
             controllerLayoutParams.width = 260;
             controllerLayoutParams.height = 540;
             windowManager.updateViewLayout(controllerView, controllerLayoutParams);
             backButton.setText("收");
-            // backButton.setBackgroundColor(getResources().getColor(R.color.colorNextButon3));
         }
         setButtonColor(backButton);
     }
@@ -575,24 +573,6 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
     // 自动到小妖身边
     public void onClickAuto() {
         setButtonColor(autoButton);
-        // autoCount ++;
-        // switch (autoCount % 4) {
-        //     case 0:
-        //         autoButton.setBackgroundColor(getResources().getColor(R.color.colorNextButon0));
-        //         break;
-        //     case 1:
-        //         autoButton.setBackgroundColor(getResources().getColor(R.color.colorNextButon1));
-        //         break;
-        //     case 2:
-        //         autoButton.setBackgroundColor(getResources().getColor(R.color.colorNextButon2));
-        //         break;
-        //     case 3:
-        //         autoButton.setBackgroundColor(getResources().getColor(R.color.colorNextButon3));
-        //         break;
-        //     default:
-        //         autoButton.setBackgroundColor(getResources().getColor(R.color.colorNextButon0));
-        //         break;
-        // }
         // 我这里逆序查找，因为，一般后台的妖灵都比较好
         if (jsonArray != null && jsonArray.length() > 0 && currentIndex > 0) {
             currentIndex --;
@@ -648,9 +628,7 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
         isRun += 1;
         if (isRun % 2 == 0) {
             stopButton.setText("走");
-            stopButton.setBackgroundColor(getResources().getColor(R.color.colorNextButon1));
         } else {
-            stopButton.setBackgroundColor(getResources().getColor(R.color.colorNextButon2));
             stopButton.setText("停");
         }
         setButtonColor(stopButton);
@@ -680,8 +658,8 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
     }
 
     private void setButtonColor(Button btn) {
-        btn.setBackgroundColor(0xFF000000 | random.nextInt(0x00FFFFFF));
-        btn.setAlpha((float)genDouble(0.5, 1.0));
+        int alpha = genInt(0x8D, 0xEF);
+        btn.setBackgroundColor((alpha<<24) | random.nextInt(0x00FFFFFF));
     }
 
     // 生成一个区间的浮点数

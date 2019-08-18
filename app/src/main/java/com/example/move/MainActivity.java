@@ -291,8 +291,6 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
             double lon = 0;
             switch (scope % 2) {
                 case 0:
-                    lat = latitude;
-                    lon = longtitude;
                     break;
                 case 1:
                     if (requestId == checkRequestId) {
@@ -550,7 +548,7 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
     public void onClickBack() {
         isBack += 1;
         if (isBack % 2 == 1) {
-            controllerLayoutParams.width = 100;
+            controllerLayoutParams.width = 400 / 3 - 10;
             windowManager.updateViewLayout(controllerView, controllerLayoutParams);
             backButton.setText("开");
             backButton.setBackgroundColor(getResources().getColor(R.color.colorNextButon2));
@@ -583,6 +581,7 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
                 break;
             default:
                 autoButton.setBackgroundColor(getResources().getColor(R.color.colorNextButon0));
+                break;
         }
         // 我这里逆序查找，因为，一般后台的妖灵都比较好
         if (jsonArray != null && jsonArray.length() > 0 && currentIndex > 0) {

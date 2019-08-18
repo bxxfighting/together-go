@@ -109,7 +109,6 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
     private Button backButton;
     private Button filterButton;
     // 定位范围
-    private int scope = 0;
     private Button autoButton;
     private int autoCount = 0;
     // 判断控制器是收起还是展开
@@ -145,12 +144,6 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
     private JSONArray jsonArray;
     // 记录当前查找到jsonArray中的哪个妖灵
     private int currentIndex = 0;
-    // 单次查询坐标范围，因此如果要上下左右移动时，可以移动下面的值 / 2的范围，就可以进行地毯式搜索
-    private double scopeLat = 0.013559;
-    private double scopeLon = 0.017802;
-    // 记录上次获取妖灵时使用的坐标
-    private double autoLatitude;
-    private double autoLongtitude;
     // 每次请求都有requestId，而成功返回时，同样有此Id，通过记录和比较requestId来判断，上次请求是否成功
     private long requestId;
     private long checkRequestId;
@@ -295,36 +288,6 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
 
     private void getPets() {
         try {
-            double lat = 0;
-            double lon = 0;
-            switch (scope % 2) {
-                case 0:
-                    break;
-                case 1:
-                    if (requestId == checkRequestId) {
-                        switch (direct % 4) {
-                            case 0:
-                                autoLatitude += (scopeLat / 2);
-                                latitude = autoLatitude;
-                                break;
-                            case 1:
-                                autoLongtitude += (scopeLon / 2);
-                                longtitude = autoLongtitude;
-                                break;
-                            case 2:
-                                autoLatitude -= (scopeLat / 2);
-                                latitude = autoLatitude;
-                                break;
-                            case 3:
-                                autoLongtitude -= (scopeLon / 2);
-                                longtitude = autoLongtitude;
-                                break;
-                        }
-                    }
-                    break;
-                default:
-                    break;
-            }
             jsonObject = new JSONObject();
             jsonObject.put("request_type", "1001");
             jsonObject.put("latitude", (int)(latitude*1000*1000));
@@ -617,8 +580,6 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
                 e.printStackTrace();
             }
         } else {
-            autoLatitude = latitude;
-            autoLongtitude = longtitude;
             Toast toast = Toast.makeText(getApplicationContext(), "搜索中...", Toast.LENGTH_SHORT);
             toast.show();
             getPets();

@@ -258,7 +258,7 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
                     jsonArray = json.getJSONArray("sprite_list");
                     checkRequestId = json.getLong("requestid");
                     currentIndex = jsonArray.length() - 1;
-                    Toast toast = Toast.makeText(getApplicationContext(), "来了", Toast.LENGTH_SHORT);
+                    Toast toast = Toast.makeText(getApplicationContext(), "搜索完毕", Toast.LENGTH_SHORT);
                     toast.show();
                     onClickAuto();
                 } catch (JSONException e) {
@@ -633,6 +633,8 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
         } else {
             autoLatitude = latitude;
             autoLongtitude = longtitude;
+            Toast toast = Toast.makeText(getApplicationContext(), "搜索中...", Toast.LENGTH_SHORT);
+            toast.show();
             getPets();
         }
     }

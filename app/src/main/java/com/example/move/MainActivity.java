@@ -409,6 +409,7 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
 
                 }
             });
+            // 摇杆功能，监听旋转角度，根据角度来进行方向移动
             rockerView = controllerView.findViewById(R.id.rockerView);
             rockerView.setCallBackMode(RockerView.CallBackMode.CALL_BACK_MODE_STATE_CHANGE);
             rockerView.setOnAngleChangeListener(new RockerView.OnAngleChangeListener() {
@@ -731,20 +732,6 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
                             latitude += Math.sin(radinas) * speed;
                             longtitude += Math.cos(radinas) * speed;
                         }
-                        // switch (direct % 4) {
-                        //     case 0:
-                        //         latitude += speed;
-                        //         break;
-                        //     case 1:
-                        //         longtitude += speed;
-                        //         break;
-                        //     case 2:
-                        //         latitude -= speed;
-                        //         break;
-                        //     case 3:
-                        //         longtitude -= speed;
-                        //         break;
-                        // }
                     }
                     setLocation(longtitude, latitude);
                 }

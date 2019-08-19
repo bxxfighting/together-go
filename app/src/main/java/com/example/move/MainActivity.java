@@ -147,6 +147,7 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
     // 每次请求都有requestId，而成功返回时，同样有此Id，通过记录和比较requestId来判断，上次请求是否成功
     private long requestId;
     private long checkRequestId;
+    // 触摸板
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -610,6 +611,17 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
             Toast toast = Toast.makeText(getApplicationContext(), "定位成功", Toast.LENGTH_SHORT);
             toast.show();
         }
+
+        // 自动点击屏幕操作
+        // int x = metrics.widthPixels / 2;
+        // int y = metrics.heightPixels / 2 - 50 * 3 / 2;
+        // String[] order = {"input", "tap", "" + x, "" + y};
+        // try {
+        //     new ProcessBuilder(order).start();
+        // } catch (IOException e) {
+        //     e.printStackTrace();
+        // }
+
 
         marker.setPosition(new LatLng(latitude, longtitude));
         if (firstLocation) {

@@ -8,6 +8,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.AssetManager;
+import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.PixelFormat;
 import android.location.Location;
@@ -15,6 +16,7 @@ import android.location.LocationManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Looper;
 import android.os.SystemClock;
 import android.provider.Settings;
 import android.util.DisplayMetrics;
@@ -37,6 +39,7 @@ import com.tencent.map.geolocation.TencentLocation;
 import com.tencent.map.geolocation.TencentLocationListener;
 import com.tencent.map.geolocation.TencentLocationManager;
 import com.tencent.map.geolocation.TencentLocationRequest;
+import com.tencent.mapsdk.raster.model.BitmapDescriptor;
 import com.tencent.mapsdk.raster.model.BitmapDescriptorFactory;
 import com.tencent.mapsdk.raster.model.LatLng;
 import com.tencent.mapsdk.raster.model.Marker;
@@ -53,8 +56,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -128,6 +134,9 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
     private LayoutParams headLayoutParams;
     // 存储妖灵头像图片
     private String[] headImages;
+    private Map<Integer, Bitmap> headBitmaps = new HashMap<Integer, Bitmap>();
+    private Set<Integer> allPetIds = new LinkedHashSet<>();
+    private Set<Integer> selectedPetIds = new HashSet<>();
     // 用于获取assets目录下的图片
     private AssetManager assetManager;
     // 筛选器中选中的妖灵
@@ -141,28 +150,29 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
     // 用于向websocket发送数据
     private JSONObject jsonObject;
     // 记录websocket返回的妖灵列表
-    private JSONArray jsonArray;
+    private JSONArray jsonArray = new JSONArray();
     // 记录当前查找到jsonArray中的哪个妖灵
     private int currentIndex = 0;
     // 每次请求都有requestId，而成功返回时，同样有此Id，通过记录和比较requestId来判断，上次请求是否成功
     private long requestId;
     private long checkRequestId;
+    private boolean requestSuccess = false;
     // 触摸板
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        mapView = (MapView) findViewById(R.id.mapview);
-        mapView.onCreate(savedInstanceState);
-        init();
+        init(savedInstanceState);
         continueLocation();
         showController();
     }
 
-    private void init() {
+    private void init(Bundle  savedInstanceState) {
         initPermission();
-        initMap();
+        initSharedPreferences();
+        initPets();
+        initMap(savedInstanceState);
         initMoveManager();
         initLocation();
         initWebsocket();
@@ -177,7 +187,9 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
     }
 
     // 初始化腾讯地图的一些信息
-    private void initMap() {
+    private void initMap(Bundle savedInstanceState) {
+        mapView = (MapView) findViewById(R.id.mapview);
+        mapView.onCreate(savedInstanceState);
         tencentMap = mapView.getMap();
         tencentMap.setZoom(15);
         UiSettings uiSettings = mapView.getUiSettings();
@@ -197,7 +209,7 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
         tencentLocationManager.setCoordinateType(TencentLocationManager.COORDINATE_TYPE_WGS84);
         tencentLocationRequest = TencentLocationRequest.create();
         tencentLocationRequest.setInterval(100);
-        int error = tencentLocationManager.requestLocationUpdates(tencentLocationRequest, this);
+        tencentLocationManager.requestLocationUpdates(tencentLocationRequest, this);
     }
 
     // 初始化模拟定位的一些信息
@@ -243,19 +255,38 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
 
             @Override
             public void onMessage(ByteString bytes) {
+                Toast toast = Toast.makeText(getApplicationContext(), "搜索完毕", Toast.LENGTH_SHORT);
+                toast.show();
                 super.onMessage(bytes);
                 byte[] bs = bytes.toByteArray();
-                byte[] buffer = new byte[bs.length-4];
+                final byte[] buffer = new byte[bs.length-4];
                 System.arraycopy(bytes.toByteArray(), 4, buffer, 0, bs.length-4);
+
+                requestSuccess = true;
                 String j = new String(buffer);
                 try {
                     JSONObject json = new JSONObject(j);
-                    jsonArray = json.getJSONArray("sprite_list");
-                    checkRequestId = json.getLong("requestid");
-                    currentIndex = jsonArray.length() - 1;
-                    Toast toast = Toast.makeText(getApplicationContext(), "搜索完毕", Toast.LENGTH_SHORT);
-                    toast.show();
-                    onClickAuto();
+                    JSONArray tmpJsonArray = new JSONArray();
+                    jsonArray= json.getJSONArray("sprite_list");
+                    for (int i = 0; i < jsonArray.length(); i ++) {
+                        JSONObject pet = jsonArray.getJSONObject(i);
+                        double  tmpNextLatitude = (double)pet.getInt("latitude") / (1000 * 1000);
+                        double tmpNextLongtitude = (double)pet.getInt("longtitude") / (1000 * 1000);
+                        GPS gps = gcj2gps84(tmpNextLatitude, tmpNextLongtitude);
+                        int petId = pet.getInt("sprite_id");
+                        Log.i("petId", String.valueOf(petId));
+                        if (selectedPetIds.contains(petId)) {
+                            tmpJsonArray.put(pet);
+                        }
+                    }
+                    if (tmpJsonArray.length() == 0) {
+                        toast = Toast.makeText(getApplicationContext(), "无结果", Toast.LENGTH_SHORT);
+                        toast.show();
+                    } else {
+                        checkRequestId = json.getLong("requestid");
+                        currentIndex = jsonArray.length() - 1;
+                        autoMoveToPet();
+                    }
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
@@ -288,33 +319,53 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
     }
 
     private void getPets() {
-        try {
-            jsonObject = new JSONObject();
-            jsonObject.put("request_type", "1001");
-            jsonObject.put("latitude", (int)(latitude*1000*1000));
-            jsonObject.put("longtitude", (int)(longtitude*1000*1000));
-            jsonObject.put("platform", 0);
-            // 保证requestId为七位数字
-            requestId = System.currentTimeMillis() % (10 * 1000 * 1000);
-            jsonObject.put("requestid", requestId);
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
-        String json = jsonObject.toString();
-        int length = json.length();
-        byte[] jsonByte = json.getBytes();
-        byte[] buffer = new byte[4+length];
-        length += 4;
-        buffer[0] = (byte)(length & 0xFF000000);
-        buffer[1] = (byte)(length & 0xFF0000);
-        buffer[2] = (byte)(length & 0xFF00);
-        buffer[3] = (byte)(length & 0xFF);
-        System.arraycopy(jsonByte, 0, buffer, 4, jsonByte.length);
-        ByteString bytes = ByteString.of(buffer);
-        if (!wsManager.isWsConnected()) {
-            wsManager.startConnect();
-        }
-        wsManager.sendMessage(bytes);
+        Toast toast = Toast.makeText(getApplicationContext(), "搜索中...", Toast.LENGTH_SHORT);
+        toast.show();
+        Thread petThread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    jsonObject = new JSONObject();
+                    jsonObject.put("request_type", "1001");
+                    jsonObject.put("latitude", (int)(latitude*1000*1000));
+                    jsonObject.put("longtitude", (int)(longtitude*1000*1000));
+                    jsonObject.put("platform", 0);
+                    // 保证requestId为七位数字
+                    requestId = System.currentTimeMillis() % (10 * 1000 * 1000);
+                    jsonObject.put("requestid", requestId);
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+                String json = jsonObject.toString();
+                int length = json.length();
+                byte[] jsonByte = json.getBytes();
+                byte[] buffer = new byte[4+length];
+                length += 4;
+                buffer[0] = (byte)(length & 0xFF000000);
+                buffer[1] = (byte)(length & 0xFF0000);
+                buffer[2] = (byte)(length & 0xFF00);
+                buffer[3] = (byte)(length & 0xFF);
+                System.arraycopy(jsonByte, 0, buffer, 4, jsonByte.length);
+                ByteString bytes = ByteString.of(buffer);
+                if (!wsManager.isWsConnected()) {
+                    wsManager.startConnect();
+                }
+                int try_count = 5;
+                requestSuccess = false;
+                while(try_count > 0) {
+                    if (requestSuccess == false) {
+                        wsManager.sendMessage(bytes);
+                    }
+                    try_count --;
+                    try {
+                        Thread.sleep(1000);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        });
+        petThread.start();
     }
 
     // 这里主要是设置悬浮窗的一些配置
@@ -397,6 +448,41 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
         }
     }
 
+    // 初始化妖灵相关内容
+    private void initPets() {
+        assetManager = this.getResources().getAssets();
+        try {
+            // 这里特意创建一个目录heads，专门用来存储头像
+            headImages = assetManager.list("heads");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        InputStream input = null;
+        for (int i = 0; i < headImages.length; i++) {
+            try {
+                input = assetManager.open(headImages[i]);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            int imageId = Integer.valueOf(headImages[i].substring(0, headImages[i].indexOf(".")));
+            headBitmaps.put(imageId, BitmapFactory.decodeStream(input));
+            // 全部妖灵id
+            allPetIds.add(imageId);
+        }
+        // 用户已选择过的妖灵
+        petSet = new HashSet<String>(petSharedPreferences.getStringSet("selected", new HashSet<String>()));
+        for (String str: petSet) {
+            selectedPetIds.add(Integer.valueOf(str));
+        }
+    }
+
+    // 初始化用户配置
+    private void initSharedPreferences() {
+        petSharedPreferences = getSharedPreferences("pet", this.MODE_PRIVATE);
+        editor = petSharedPreferences.edit();
+    }
+
     // 初始化筛选
     private void initFilter() {
         filterLayoutParams = new WindowManager.LayoutParams();
@@ -419,22 +505,10 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
         headLayoutParams = new LayoutParams(width, height);
         headLayoutParams.setMargins(5, 5, 5, 5);
 
-        // 获取assets下的小妖头像
-        assetManager = this.getResources().getAssets();
-        try {
-            // 将所有头像都放到assets/heads下，避免其它图片干扰
-            headImages = assetManager.list("heads");
-        } catch(IOException e) {
-            e.printStackTrace();
-        }
         int col = (int)Math.ceil(headImages.length / 10);
         filterLayoutParams.x = 5;
         filterLayoutParams.y = (metrics.heightPixels - col * 10 - width * col) / 2 - 150;
         filterLayoutParams.height = col * 10 + width * col + 300;
-        // 记录小妖当前是否被选，以小妖id为key，false为未选、true为已选
-        petSharedPreferences = getSharedPreferences("pet", this.MODE_PRIVATE);
-        editor = petSharedPreferences.edit();
-        petSet = new HashSet<String>(petSharedPreferences.getStringSet("selected", new HashSet<String>()));
     }
 
     // 显示筛选界面
@@ -452,25 +526,19 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
     // 显示小妖头像
     // 这里就是读取assets中的图片，一排显示10个
     private void showPet() {
-        InputStream input = null;
         LinearLayout imageLinearLayout = null;
-        for (int i = 0; i < headImages.length; i ++) {
-            if (i % 10 == 0) {
+        int count = 0;
+        for (int petId : allPetIds) {
+            if (count % 10 == 0) {
                 imageLinearLayout = new LinearLayout(this);
                 imageLinearLayout.setOrientation(LinearLayout.HORIZONTAL);
                 headLinearLayout.addView(imageLinearLayout);
             }
-            try {
-                input = assetManager.open(headImages[i]);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
             final ImageView imgView = new ImageView(this);
             imgView.setLayoutParams(headLayoutParams);
-            imgView.setImageBitmap(BitmapFactory.decodeStream(input));
-            int imageId = Integer.valueOf(headImages[i].substring(0, headImages[i].indexOf(".")));
-            imgView.setId(imageId);
-            if (petSet.contains(String.valueOf(imageId))) {
+            imgView.setImageBitmap(headBitmaps.get(petId));
+            imgView.setId(petId);
+            if (selectedPetIds.contains(petId)) {
                 imgView.setAlpha(clickHeadAlpha);
             } else {
                 imgView.setAlpha(unclickHeadAlpha);
@@ -478,12 +546,14 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
             imgView.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
-                    int imageId = view.getId();
-                    if (petSet.contains(String.valueOf(imageId))) {
-                        petSet.remove(String.valueOf(imageId));
+                    int petId = view.getId();
+                    if (selectedPetIds.contains(petId)) {
+                        petSet.remove(String.valueOf(petId));
+                        selectedPetIds.remove(petId);
                         view.setAlpha(unclickHeadAlpha);
                     } else {
-                        petSet.add(String.valueOf(imageId));
+                        petSet.add(String.valueOf(petId));
+                        selectedPetIds.add(petId);
                         view.setAlpha(clickHeadAlpha);
                     }
                     editor.putStringSet("selected", petSet);
@@ -491,6 +561,7 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
                 }
             });
             imageLinearLayout.addView(imgView);
+            count ++;
         }
     }
     // 隐藏筛选界面
@@ -499,6 +570,7 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
     }
 
     public void onClick(View view) {
+        setButtonColor((Button)view);
         switch (view.getId()) {
             case R.id.stopButton:
                 onClickOnOff();
@@ -538,64 +610,71 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
             windowManager.updateViewLayout(controllerView, controllerLayoutParams);
             backButton.setText("收");
         }
-        setButtonColor(backButton);
+        // setButtonColor(backButton);
     }
     // 设置要筛选小妖
     public void onClickFilter() {
-        setButtonColor(filterButton);
+        // setButtonColor(filterButton);
         showFilter();
     }
     // 自动到小妖身边
     public void onClickAuto() {
-        setButtonColor(autoButton);
+        autoMoveToPet();
+    }
+    private void autoMoveToPet() {
         // 我这里逆序查找，因为，一般后台的妖灵都比较好
         if (jsonArray != null && jsonArray.length() > 0 && currentIndex > 0) {
-            currentIndex --;
-            try {
-                JSONObject currentPet = jsonArray.getJSONObject(currentIndex);
-                double  tmpNextLatitude = (double)currentPet.getInt("latitude") / (1000 * 1000);
-                double tmpNextLongtitude = (double)currentPet.getInt("longtitude") / (1000 * 1000);
-                GPS gps = gcj2gps84(tmpNextLatitude, tmpNextLongtitude);
-                final double nextLatitude = gps.getLat();
-                final double nextLongtitude = gps.getLon();
-                final int sprite_id = currentPet.getInt("sprite_id");
-                int gentime = currentPet.getInt("gentime");
-                int lifetime = currentPet.getInt("lifetime");
-                long currentTime = System.currentTimeMillis() / 1000;
-                if (petSet.contains(String.valueOf(sprite_id)) && (gentime + lifetime) > (currentTime + 2)) {
-                    Thread moveThread = new Thread(new Runnable() {
-                        @Override
-                        public void run() {
-                            final double latitudeStep = (nextLatitude - latitude) / 3000;
-                            final double longtitudeStep = (nextLongtitude - longtitude) / 3000;
-                            // 这里我想的是，用3秒走到对应的坐标
-                            for (int i = 0; i < 3000; i ++) {
-                                try {
-                                    Thread.sleep(1);
-                                } catch (InterruptedException e) {
-                                    e.printStackTrace();
-                                }
-                                latitude += latitudeStep;
-                                longtitude += longtitudeStep;
-                            }
-                            // 最后直接将要去的坐标进行赋值，保证是正确的位置
-                            latitude = nextLatitude;
-                            longtitude = nextLongtitude;
-                        }
-                    });
-                    moveThread.start();
-                } else {
-                    onClickAuto();
+            for (; currentIndex >= 0; currentIndex --) {
+                try {
+                    JSONObject currentPet = jsonArray.getJSONObject(currentIndex);
+                    double  tmpNextLatitude = (double)currentPet.getInt("latitude") / (1000 * 1000);
+                    double tmpNextLongtitude = (double)currentPet.getInt("longtitude") / (1000 * 1000);
+                    GPS gps = gcj2gps84(tmpNextLatitude, tmpNextLongtitude);
+                    final double nextLatitude = gps.getLat();
+                    final double nextLongtitude = gps.getLon();
+                    final int sprite_id = currentPet.getInt("sprite_id");
+                    int gentime = currentPet.getInt("gentime");
+                    int lifetime = currentPet.getInt("lifetime");
+                    long currentTime = System.currentTimeMillis() / 1000;
+                    jsonArray.remove(currentIndex);
+                    if (petSet.contains(String.valueOf(sprite_id)) && (gentime + lifetime) > (currentTime + 2)) {
+                        moveToPet(nextLongtitude, nextLatitude);
+                        currentIndex --;
+                        break;
+                    }
+                } catch (JSONException e) {
+                    e.printStackTrace();
                 }
-            } catch (JSONException e) {
-                e.printStackTrace();
             }
         } else {
-            Toast toast = Toast.makeText(getApplicationContext(), "搜索中...", Toast.LENGTH_SHORT);
-            toast.show();
             getPets();
         }
     }
+    // 移动到妖灵旁边
+    private void moveToPet(final double lon, final double lat) {
+        Thread moveThread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                final double latitudeStep = (lat - latitude) / 3000;
+                final double longtitudeStep = (lon - longtitude) / 3000;
+                // 这里我想的是，用3秒走到对应的坐标
+                for (int i = 0; i < 3000; i ++) {
+                    try {
+                        Thread.sleep(1);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                    latitude += latitudeStep;
+                    longtitude += longtitudeStep;
+                }
+                // 最后直接将要去的坐标进行赋值，保证是正确的位置
+                latitude = lat;
+                longtitude = lon;
+            }
+        });
+        moveThread.start();
+    }
+
     // 控制走与停的方法，由stopButton调用
     public void onClickOnOff() {
         isRun += 1;
@@ -604,7 +683,7 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
         } else {
             stopButton.setText("停");
         }
-        setButtonColor(stopButton);
+        // setButtonColor(stopButton);
     }
 
     // 这里tencent定位监听的回调，只要位置发生变化，就会调用此方法

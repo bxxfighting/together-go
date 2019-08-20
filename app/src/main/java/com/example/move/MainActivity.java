@@ -335,14 +335,15 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
         controllerLayoutParams.format = PixelFormat.RGBA_8888;
         controllerLayoutParams.flags = WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE;
         controllerLayoutParams.gravity = Gravity.START | Gravity.TOP;
-        // 这是悬浮窗的宽高
-        controllerLayoutParams.width = 260;
-        controllerLayoutParams.height = 540;
+
         metrics = new DisplayMetrics();
         windowManager.getDefaultDisplay().getMetrics(metrics);
+        // 这是悬浮窗的宽高
+        controllerLayoutParams.width = dpi2pix(100);
+        controllerLayoutParams.height = dpi2pix(240);
         // 这是悬浮窗处于屏幕的位置
         controllerLayoutParams.x = metrics.widthPixels;
-        controllerLayoutParams.y = metrics.heightPixels / 2 - 50 * 3 / 2;
+        controllerLayoutParams.y = metrics.heightPixels / 2 - dpi2pix(240) / 2;
     }
 
     private void showController() {
@@ -516,19 +517,24 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
                 break;
         }
     }
+    private int dpi2pix(float dpi) {
+        return (int)(dpi * metrics.density + 0.5f);
+    }
 
     // 控制面板是展开还是收回的方法，由backButton调用
     // 主要就是重新设置悬浮窗的宽度，然后更新悬浮窗
     public void onClickBack() {
         isBack += 1;
         if (isBack % 2 == 1) {
-            controllerLayoutParams.width = 260 / 2 -10;
-            controllerLayoutParams.height = (260 / 2 - 10) * 2;
+            // controllerLayoutParams.width = 260 / 2 - 10;
+            controllerLayoutParams.width = dpi2pix(50);
+            // controllerLayoutParams.height = (260 / 2 - 10) * 2;
+            controllerLayoutParams.height = dpi2pix(100);
             windowManager.updateViewLayout(controllerView, controllerLayoutParams);
             backButton.setText("开");
         } else {
-            controllerLayoutParams.width = 260;
-            controllerLayoutParams.height = 540;
+            controllerLayoutParams.width = dpi2pix(100);
+            controllerLayoutParams.height = dpi2pix(240);
             windowManager.updateViewLayout(controllerView, controllerLayoutParams);
             backButton.setText("收");
         }

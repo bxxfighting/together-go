@@ -280,7 +280,7 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
                         }
                     }
                     if (tmpJsonArray.length() == 0) {
-                        toast = Toast.makeText(getApplicationContext(), "无结果", Toast.LENGTH_SHORT);
+                        toast = Toast.makeText(getApplicationContext(), "无结果, 请移动位置或者修改筛选项", Toast.LENGTH_LONG);
                         toast.show();
                     } else {
                         checkRequestId = json.getLong("requestid");

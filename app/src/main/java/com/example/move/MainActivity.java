@@ -198,9 +198,18 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
         // 地图滚动
         // uiSettings.setScrollGesturesEnabled(false);
         marker = tencentMap.addMarker(new MarkerOptions()
-        .anchor(0.5f, 0.5f)
         .icon(BitmapDescriptorFactory.defaultMarker())
         .draggable(true));
+
+        tencentMap.setOnMarkerClickListener(new TencentMap.OnMarkerClickListener() {
+
+            @Override
+            public boolean onMarkerClick(Marker arg0) {
+                LatLng pos =  arg0.getPosition();
+                moveToPet(pos.getLongitude(), pos.getLatitude());
+                return false;
+            }
+        });
     }
 
     // 初始化腾讯定位的一些信息
@@ -274,12 +283,16 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
                         double tmpNextLongtitude = (double)pet.getInt("longtitude") / (1000 * 1000);
                         GPS gps = gcj2gps84(tmpNextLatitude, tmpNextLongtitude);
                         int petId = pet.getInt("sprite_id");
-                        Log.i("petId", String.valueOf(petId));
                         if (selectedPetIds.contains(petId)) {
                             tmpJsonArray.put(pet);
+                            tencentMap.addMarker(new MarkerOptions()
+                                    .position(new LatLng(gps.getLat(), gps.getLon()))
+                                    .icon(BitmapDescriptorFactory.fromBitmap(Bitmap.createScaledBitmap(headBitmaps.get(petId), dpi2pix(30), dpi2pix(30), true)))
+                                    .draggable(false));
                         }
                     }
-                    if (tmpJsonArray.length() == 0) {
+                    jsonArray = tmpJsonArray;
+                    if (jsonArray.length() == 0) {
                         toast = Toast.makeText(getApplicationContext(), "无结果, 请移动位置或者修改筛选项", Toast.LENGTH_LONG);
                         toast.show();
                     } else {
@@ -610,11 +623,9 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
             windowManager.updateViewLayout(controllerView, controllerLayoutParams);
             backButton.setText("收");
         }
-        // setButtonColor(backButton);
     }
     // 设置要筛选小妖
     public void onClickFilter() {
-        // setButtonColor(filterButton);
         showFilter();
     }
     // 自动到小妖身边
@@ -637,7 +648,8 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
                     int lifetime = currentPet.getInt("lifetime");
                     long currentTime = System.currentTimeMillis() / 1000;
                     jsonArray.remove(currentIndex);
-                    if (petSet.contains(String.valueOf(sprite_id)) && (gentime + lifetime) > (currentTime + 2)) {
+                    // 只抓筛选中的，或者在全部中不存在的(也就意味着新出的，一般新出的都想要)
+                    if ((selectedPetIds.contains(sprite_id) || !allPetIds.contains(sprite_id)) && (gentime + lifetime) > (currentTime + 2)) {
                         moveToPet(nextLongtitude, nextLatitude);
                         currentIndex --;
                         break;
@@ -677,13 +689,13 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
 
     // 控制走与停的方法，由stopButton调用
     public void onClickOnOff() {
+        tencentMap.clearAllOverlays();
         isRun += 1;
         if (isRun % 2 == 0) {
             stopButton.setText("走");
         } else {
             stopButton.setText("停");
         }
-        // setButtonColor(stopButton);
     }
 
     // 这里tencent定位监听的回调，只要位置发生变化，就会调用此方法
@@ -708,11 +720,11 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
         // }
 
 
-        marker.setPosition(new LatLng(latitude, longtitude));
         if (firstLocation) {
             firstLocation = false;
             tencentMap.setCenter(new LatLng(latitude, longtitude));
         }
+        marker.setPosition(new LatLng(latitude, longtitude));
     }
 
     @Override

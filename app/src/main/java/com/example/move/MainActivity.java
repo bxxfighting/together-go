@@ -169,6 +169,7 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
 
     private void init() {
         initPermission();
+        initPets();
         initMap();
         initMoveManager();
         initLocation();
@@ -460,7 +461,25 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
         showPets();
     }
     private void initPets() {
-
+        // 获取assets下的小妖头像
+        assetManager = this.getResources().getAssets();
+        try {
+            // 将所有头像都放到assets/heads下，避免其它图片干扰
+            headImages = assetManager.list("heads");
+        } catch(IOException e) {
+            e.printStackTrace();
+        }
+        InputStream input = null;
+        for (int i = 0; i < headImages.length; i ++) {
+            int petId = Integer.valueOf(headImages[i].substring(0, headImages[i].indexOf(".")));
+            allPetSet.add(petId);
+            try {
+                input = assetManager.open(headImages[i]);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            headBitmaps.put(petId, BitmapFactory.decodeStream(input));
+        }
     }
 
     // 显示小妖头像
@@ -468,27 +487,25 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
     private void showPets() {
         InputStream input = null;
         LinearLayout imageLinearLayout = null;
-        for (int i = 0; i < headImages.length; i ++) {
-            if (i % 10 == 0) {
+        int count = 0;
+        for (int petId : allPetSet) {
+            // 每十个一换行
+            if (count % 10 == 0) {
                 imageLinearLayout = new LinearLayout(this);
                 imageLinearLayout.setOrientation(LinearLayout.HORIZONTAL);
                 headLinearLayout.addView(imageLinearLayout);
             }
-            try {
-                input = assetManager.open(headImages[i]);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+            count ++;
             final ImageView imgView = new ImageView(this);
             imgView.setLayoutParams(headLayoutParams);
-            imgView.setImageBitmap(BitmapFactory.decodeStream(input));
-            int imageId = Integer.valueOf(headImages[i].substring(0, headImages[i].indexOf(".")));
-            imgView.setId(imageId);
-            if (selectedPetSet.contains(imageId)) {
+            imgView.setImageBitmap(headBitmaps.get(petId));
+            imgView.setId(petId);
+            if (selectedPetSet.contains(petId)) {
                 imgView.setAlpha(clickHeadAlpha);
             } else {
                 imgView.setAlpha(unclickHeadAlpha);
             }
+            // 监听图标点击事件来切换选中与未选中状态
             imgView.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
@@ -502,6 +519,7 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
                         selectedPetSet.add(imageId);
                         view.setAlpha(clickHeadAlpha);
                     }
+                    // 每一次改变，都将数据写入到SharedPreferences，以便保存用户数据
                     editor.putStringSet("selected", petSet);
                     editor.commit();
                 }

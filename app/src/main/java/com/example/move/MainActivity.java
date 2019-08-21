@@ -8,6 +8,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.AssetManager;
+import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.PixelFormat;
 import android.location.Location;
@@ -53,8 +54,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -131,6 +135,9 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
     // 用于获取assets目录下的图片
     private AssetManager assetManager;
     // 筛选器中选中的妖灵
+    private Map<Integer, Bitmap> headBitmaps = new HashMap<>();
+    private Set<Integer> allPetSet = new LinkedHashSet<>();
+    private Set<Integer> selectedPetSet = new HashSet<>();
     private Set<String> petSet;
     private SharedPreferences petSharedPreferences;
     private SharedPreferences.Editor editor;
@@ -435,6 +442,9 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
         petSharedPreferences = getSharedPreferences("pet", this.MODE_PRIVATE);
         editor = petSharedPreferences.edit();
         petSet = new HashSet<String>(petSharedPreferences.getStringSet("selected", new HashSet<String>()));
+        for (String str : petSet) {
+            selectedPetSet.add(Integer.valueOf(str));
+        }
     }
 
     // 显示筛选界面
@@ -447,11 +457,15 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
                 windowManager.addView(filterView, filterLayoutParams);
             }
         }
-        showPet();
+        showPets();
     }
+    private void initPets() {
+
+    }
+
     // 显示小妖头像
     // 这里就是读取assets中的图片，一排显示10个
-    private void showPet() {
+    private void showPets() {
         InputStream input = null;
         LinearLayout imageLinearLayout = null;
         for (int i = 0; i < headImages.length; i ++) {
@@ -470,7 +484,7 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
             imgView.setImageBitmap(BitmapFactory.decodeStream(input));
             int imageId = Integer.valueOf(headImages[i].substring(0, headImages[i].indexOf(".")));
             imgView.setId(imageId);
-            if (petSet.contains(String.valueOf(imageId))) {
+            if (selectedPetSet.contains(imageId)) {
                 imgView.setAlpha(clickHeadAlpha);
             } else {
                 imgView.setAlpha(unclickHeadAlpha);
@@ -479,11 +493,13 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
                 @Override
                 public void onClick(View view) {
                     int imageId = view.getId();
-                    if (petSet.contains(String.valueOf(imageId))) {
+                    if (selectedPetSet.contains(imageId)) {
                         petSet.remove(String.valueOf(imageId));
+                        selectedPetSet.remove(imageId);
                         view.setAlpha(unclickHeadAlpha);
                     } else {
                         petSet.add(String.valueOf(imageId));
+                        selectedPetSet.add(imageId);
                         view.setAlpha(clickHeadAlpha);
                     }
                     editor.putStringSet("selected", petSet);
@@ -560,7 +576,7 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
                 int gentime = currentPet.getInt("gentime");
                 int lifetime = currentPet.getInt("lifetime");
                 long currentTime = System.currentTimeMillis() / 1000;
-                if (petSet.contains(String.valueOf(sprite_id)) && (gentime + lifetime) > (currentTime + 2)) {
+                if (selectedPetSet.contains(sprite_id) && (gentime + lifetime) > (currentTime + 2)) {
                     Thread moveThread = new Thread(new Runnable() {
                         @Override
                         public void run() {

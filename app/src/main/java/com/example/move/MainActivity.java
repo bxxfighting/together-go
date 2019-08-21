@@ -79,6 +79,7 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
     private float clickHeadAlpha = (float)1.0;
     private float unclickHeadAlpha = (float)0.3;
     private DisplayMetrics metrics;
+    private Toast toast;
     // 腾讯地图
     MapView mapView = null;
     TencentMap tencentMap = null;
@@ -264,6 +265,7 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
 
             @Override
             public void onMessage(ByteString bytes) {
+                requestSuccess = true;
                 Toast toast = Toast.makeText(getApplicationContext(), "搜索完毕", Toast.LENGTH_SHORT);
                 toast.show();
                 super.onMessage(bytes);
@@ -271,24 +273,28 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
                 final byte[] buffer = new byte[bs.length-4];
                 System.arraycopy(bytes.toByteArray(), 4, buffer, 0, bs.length-4);
 
-                requestSuccess = true;
                 String j = new String(buffer);
                 try {
                     JSONObject json = new JSONObject(j);
                     JSONArray tmpJsonArray = new JSONArray();
                     jsonArray= json.getJSONArray("sprite_list");
-                    for (int i = 0; i < jsonArray.length(); i ++) {
-                        JSONObject pet = jsonArray.getJSONObject(i);
+                    handlePetResult(jsonArray);
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            }
+            private void handlePetResult(JSONArray pets) {
+                try {
+                    JSONArray tmpJsonArray = new JSONArray();
+                    for (int i = 0; i < pets.length(); i ++) {
+                        JSONObject pet = pets.getJSONObject(i);
                         double  tmpNextLatitude = (double)pet.getInt("latitude") / (1000 * 1000);
                         double tmpNextLongtitude = (double)pet.getInt("longtitude") / (1000 * 1000);
                         GPS gps = gcj2gps84(tmpNextLatitude, tmpNextLongtitude);
                         int petId = pet.getInt("sprite_id");
                         if (selectedPetIds.contains(petId)) {
                             tmpJsonArray.put(pet);
-                            tencentMap.addMarker(new MarkerOptions()
-                                    .position(new LatLng(gps.getLat(), gps.getLon()))
-                                    .icon(BitmapDescriptorFactory.fromBitmap(Bitmap.createScaledBitmap(headBitmaps.get(petId), dpi2pix(30), dpi2pix(30), true)))
-                                    .draggable(false));
+                            setPetHeadToMap(petId, gps.getLat(), gps.getLon());
                         }
                     }
                     jsonArray = tmpJsonArray;
@@ -296,13 +302,26 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
                         toast = Toast.makeText(getApplicationContext(), "无结果, 请移动位置或者修改筛选项", Toast.LENGTH_LONG);
                         toast.show();
                     } else {
-                        checkRequestId = json.getLong("requestid");
-                        currentIndex = jsonArray.length() - 1;
+                        currentIndex = 0;
                         autoMoveToPet();
                     }
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
+            }
+            private void setPetHeadToMap(int petId, double lat, double lon) {
+                // 获取妖灵头像并且进行缩放
+                Bitmap headBitmap = Bitmap.createScaledBitmap(headBitmaps.get(petId), dpi2pix(30), dpi2pix(30), true);
+                // 设置marker属性
+                MarkerOptions options = new MarkerOptions();
+                // 设置位置
+                options.position(new LatLng(lat, lon));
+                // 设置显示图标
+                options.icon(BitmapDescriptorFactory.fromBitmap(headBitmap));
+                // 不可拖拽
+                options.draggable(false);
+                // 增加到地图上
+                tencentMap.addMarker(options);
             }
 
             @Override

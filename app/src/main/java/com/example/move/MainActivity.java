@@ -499,6 +499,7 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
     }
 
     public void onClick(View view) {
+        setButtonColor((Button)view);
         switch (view.getId()) {
             case R.id.stopButton:
                 onClickOnOff();
@@ -538,16 +539,13 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
             windowManager.updateViewLayout(controllerView, controllerLayoutParams);
             backButton.setText("收");
         }
-        setButtonColor(backButton);
     }
     // 设置要筛选小妖
     public void onClickFilter() {
-        setButtonColor(filterButton);
         showFilter();
     }
     // 自动到小妖身边
     public void onClickAuto() {
-        setButtonColor(autoButton);
         // 我这里逆序查找，因为，一般后台的妖灵都比较好
         if (jsonArray != null && jsonArray.length() > 0 && currentIndex > 0) {
             currentIndex --;
@@ -604,7 +602,6 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
         } else {
             stopButton.setText("停");
         }
-        setButtonColor(stopButton);
     }
 
     // 这里tencent定位监听的回调，只要位置发生变化，就会调用此方法

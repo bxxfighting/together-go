@@ -160,17 +160,15 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        mapView = (MapView) findViewById(R.id.mapview);
-        mapView.onCreate(savedInstanceState);
-        init();
+        init(savedInstanceState);
         continueLocation();
         showController();
     }
 
-    private void init() {
+    private void init(Bundle savedInstanceState) {
         initPermission();
         initPets();
-        initMap();
+        initMap(savedInstanceState);
         initMoveManager();
         initLocation();
         initWebsocket();
@@ -185,7 +183,9 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
     }
 
     // 初始化腾讯地图的一些信息
-    private void initMap() {
+    private void initMap(Bundle savedInstanceState) {
+        mapView = (MapView) findViewById(R.id.mapview);
+        mapView.onCreate(savedInstanceState);
         tencentMap = mapView.getMap();
         tencentMap.setZoom(15);
         UiSettings uiSettings = mapView.getUiSettings();
@@ -193,11 +193,12 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
         // uiSettings.setZoomGesturesEnabled(false);
         // 地图滚动
         // uiSettings.setScrollGesturesEnabled(false);
+        // 当前位置marker
         marker = tencentMap.addMarker(new MarkerOptions()
-        .anchor(0.5f, 0.5f)
         .icon(BitmapDescriptorFactory.defaultMarker())
         .draggable(true));
 
+        // 设置点击地图事件监听
         tencentMap.setOnMapClickListener(new TencentMap.OnMapClickListener() {
             @Override
             public void onMapClick(final LatLng latLng) {
@@ -206,6 +207,7 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
         });
     }
 
+    // 处理点击地图事件
     private void handleMapClick(final double lat, final double lon) {
         AlertDialog alertDialog = new AlertDialog.Builder(this)
                 .setTitle("怎么去？")

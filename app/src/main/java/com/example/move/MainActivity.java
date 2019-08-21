@@ -386,6 +386,9 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
     }
 
     private void getPets() {
+        clearPetsFromMap();
+        toast = Toast.makeText(getApplicationContext(), "搜索中...", Toast.LENGTH_SHORT);
+        toast.show();
         try {
             jsonObject = new JSONObject();
             jsonObject.put("request_type", "1001");
@@ -692,27 +695,32 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
     // 自动到小妖身边
     public void onClickAuto() {
         // 我这里逆序查找，因为，一般后台的妖灵都比较好
+        double nextLatitude = 0;
+        double nextLongtitude = 0;
         if (petJsonArray != null && petJsonArray.length() > 0 && currentIndex >= 0) {
-            try {
-                JSONObject currentPet = petJsonArray.getJSONObject(currentIndex);
-                double  nextLatitude = currentPet.getDouble("latitude");
-                double nextLongtitude = currentPet.getDouble("longtitude");
-                final int sprite_id = currentPet.getInt("sprite_id");
-                int endtime = currentPet.getInt("endtime");
-                long currentTime = System.currentTimeMillis() / 1000;
-                if (selectedPetSet.contains(sprite_id) && endtime > (currentTime + 2)) {
-                    moveTo(nextLatitude, nextLongtitude);
-                } else {
-                    onClickAuto();
+            for (; currentIndex >= 0; currentIndex --) {
+                try {
+                    JSONObject currentPet = petJsonArray.getJSONObject(currentIndex);
+                    nextLatitude = currentPet.getDouble("latitude");
+                    nextLongtitude = currentPet.getDouble("longtitude");
+                    final int sprite_id = currentPet.getInt("sprite_id");
+                    int endtime = currentPet.getInt("endtime");
+                    long currentTime = System.currentTimeMillis() / 1000;
+                    if (selectedPetSet.contains(sprite_id) && endtime > (currentTime + 2)) {
+                        break;
+                    }
+                } catch (JSONException e) {
+                    e.printStackTrace();
                 }
-            } catch (JSONException e) {
-                e.printStackTrace();
             }
-            currentIndex --;
+            // 如果循环退出时，currentIndex大于等于0就说明是break出来的
+            if (currentIndex >= 0) {
+                moveTo(nextLatitude, nextLongtitude);
+                currentIndex --;
+            } else {
+                getPets();
+            }
         } else {
-            Toast toast = Toast.makeText(getApplicationContext(), "搜索中...", Toast.LENGTH_SHORT);
-            toast.show();
-            clearPetsFromMap();
             getPets();
         }
     }

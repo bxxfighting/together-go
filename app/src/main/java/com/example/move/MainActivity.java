@@ -197,6 +197,39 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
         .anchor(0.5f, 0.5f)
         .icon(BitmapDescriptorFactory.defaultMarker())
         .draggable(true));
+
+        tencentMap.setOnMapClickListener(new TencentMap.OnMapClickListener() {
+            @Override
+            public void onMapClick(final LatLng latLng) {
+                handleMapClick(latLng.getLatitude(), latLng.getLongitude());
+            }
+        });
+    }
+
+    private void handleMapClick(final double lat, final double lon) {
+        AlertDialog alertDialog = new AlertDialog.Builder(this)
+                .setTitle("怎么去？")
+                .setNeutralButton("飞过去", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i) {
+                        latitude = lat;
+                        longtitude = lon;
+                    }
+                })
+                .setPositiveButton("走过去", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i) {
+                        moveTo(lat, lon);
+                    }
+                })
+                .setNegativeButton("不去", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i) {
+
+                    }
+                })
+                .create();
+        alertDialog.show();
     }
 
     // 初始化腾讯定位的一些信息
@@ -595,27 +628,7 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
                 int lifetime = currentPet.getInt("lifetime");
                 long currentTime = System.currentTimeMillis() / 1000;
                 if (selectedPetSet.contains(sprite_id) && (gentime + lifetime) > (currentTime + 2)) {
-                    Thread moveThread = new Thread(new Runnable() {
-                        @Override
-                        public void run() {
-                            final double latitudeStep = (nextLatitude - latitude) / 3000;
-                            final double longtitudeStep = (nextLongtitude - longtitude) / 3000;
-                            // 这里我想的是，用3秒走到对应的坐标
-                            for (int i = 0; i < 3000; i ++) {
-                                try {
-                                    Thread.sleep(1);
-                                } catch (InterruptedException e) {
-                                    e.printStackTrace();
-                                }
-                                latitude += latitudeStep;
-                                longtitude += longtitudeStep;
-                            }
-                            // 最后直接将要去的坐标进行赋值，保证是正确的位置
-                            latitude = nextLatitude;
-                            longtitude = nextLongtitude;
-                        }
-                    });
-                    moveThread.start();
+                    moveTo(nextLatitude, nextLongtitude);
                 } else {
                     onClickAuto();
                 }
@@ -627,6 +640,29 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
             toast.show();
             getPets();
         }
+    }
+    private void moveTo(final double lat, final double lon) {
+        Thread moveThread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                final double latitudeStep = (lat - latitude) / 3000;
+                final double longtitudeStep = (lon - longtitude) / 3000;
+                // 这里我想的是，用3秒走到对应的坐标
+                for (int i = 0; i < 3000; i ++) {
+                    try {
+                        Thread.sleep(1);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                    latitude += latitudeStep;
+                    longtitude += longtitudeStep;
+                }
+                // 最后直接将要去的坐标进行赋值，保证是正确的位置
+                latitude = lat;
+                longtitude = lon;
+            }
+        });
+        moveThread.start();
     }
     // 控制走与停的方法，由stopButton调用
     public void onClickOnOff() {

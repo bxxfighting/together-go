@@ -183,12 +183,12 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
 
     private void init(Bundle savedInstanceState) {
         initPermission();
-        initMoveManager();
         // 初始化妖灵数据
         initPets();
         // 初始化各个控制窗口
         initWindowManager(savedInstanceState);
         initWebsocket();
+        initMoveManager();
         initLocation();
     }
 
@@ -819,7 +819,6 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
             Toast toast = Toast.makeText(getApplicationContext(), "定位成功", Toast.LENGTH_SHORT);
             toast.show();
         }
-
         // 自动点击屏幕操作
         // int x = metrics.widthPixels / 2;
         // int y = metrics.heightPixels / 2 - 50 * 3 / 2;
@@ -831,7 +830,7 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
         // }
 
 
-        if (firstLocation) {
+        if (firstLocation && latitude != 0 && longtitude != 0) {
             firstLocation = false;
             tencentMap.setCenter(new LatLng(latitude, longtitude));
         }

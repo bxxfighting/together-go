@@ -72,10 +72,13 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
     private double pi = 3.1415926535897932384626;
     public double a = 6378245.0;
     public double ee = 0.00669342162296594323;
-    private float clickButtonAlpha = (float)0.8;
-    private float unClickButtonAlpha = (float)0.3;
-    private float clickHeadAlpha = (float)1.0;
-    private float unclickHeadAlpha = (float)0.3;
+    private float clickButtonAlpha = 0.8f;
+    private float unClickButtonAlpha = 0.3f;
+    private float clickHeadAlpha = 1.0f;
+    private float unclickHeadAlpha = 0.3f;
+    // 一次搜索，腾讯返回结果经纬度的跨度
+    private double latSpan =  0.01369;
+    private double lonSpan = 0.01786;
     private DisplayMetrics metrics;
     // 腾讯地图
     MapView mapView = null;
@@ -113,6 +116,8 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
     private Button stopButton;
     private Button backButton;
     private Button filterButton;
+    private Button mapButton;
+    private Button nextButton;
     // 定位范围
     private Button autoButton;
     private int autoCount = 0;
@@ -120,6 +125,12 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
     private int isBack = 0;
     private RockerView rockerView;
     private double angle = 0;
+    // 悬浮窗地图
+    private View floatMapView;
+    private WindowManager.LayoutParams floatMapViewParams;
+    private Button floatMapCloseButton;
+    private MapView floatTencentMapView;
+    private TencentMap floatTencentMap;
 
     // 悬浮效果控制器
     private WindowManager windowManager;
@@ -171,14 +182,34 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
 
     private void init(Bundle savedInstanceState) {
         initPermission();
+        // 初始化妖灵数据
         initPets();
-        initMap(savedInstanceState);
+        // 初始化各个控制窗口
+        initWindowManager(savedInstanceState);
+        initWebsocket();
         initMoveManager();
         initLocation();
-        initWebsocket();
-        initController();
-        initFilter();
     }
+
+    private void initWindowManager(Bundle savedInstanceState) {
+        windowManager = (WindowManager) getSystemService(WINDOW_SERVICE);
+        metrics = new DisplayMetrics();
+        windowManager.getDefaultDisplay().getMetrics(metrics);
+
+        // 以下为取其它activity内容
+        LayoutInflater layoutInflater = LayoutInflater.from(this);
+        // 控制按钮悬浮窗
+        controllerView = layoutInflater.inflate(R.layout.activity_controller, null);
+        initController();
+        // 筛选悬浮窗
+        filterView = layoutInflater.inflate(R.layout.activity_filter, null);
+        initFilter();
+        showPets();
+        // 地图悬浮窗
+        floatMapView = layoutInflater.inflate(R.layout.activity_map, null);
+        initMap(savedInstanceState);
+    }
+
     private void initPermission() {
         // 定位权限
         // 模拟定位权限
@@ -188,7 +219,7 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
 
     // 初始化腾讯地图的一些信息
     private void initMap(Bundle savedInstanceState) {
-        mapView = (MapView) findViewById(R.id.mapview);
+        mapView = (MapView) floatMapView.findViewById(R.id.floatmapview);
         mapView.onCreate(savedInstanceState);
         tencentMap = mapView.getMap();
         tencentMap.setZoom(15);
@@ -219,29 +250,7 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
 
     // 处理点击地图事件
     private void handleMapClick(final double lat, final double lon) {
-        AlertDialog alertDialog = new AlertDialog.Builder(this)
-                .setTitle("怎么去？")
-                .setNeutralButton("飞过去", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialogInterface, int i) {
-                        latitude = lat;
-                        longtitude = lon;
-                    }
-                })
-                .setPositiveButton("走过去", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialogInterface, int i) {
-                        moveTo(lat, lon);
-                    }
-                })
-                .setNegativeButton("不去", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialogInterface, int i) {
-
-                    }
-                })
-                .create();
-        alertDialog.show();
+        moveTo(lat, lon);
     }
 
     // 初始化腾讯定位的一些信息
@@ -250,7 +259,7 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
         tencentLocationManager.setCoordinateType(TencentLocationManager.COORDINATE_TYPE_WGS84);
         tencentLocationRequest = TencentLocationRequest.create();
         tencentLocationRequest.setInterval(100);
-        int error = tencentLocationManager.requestLocationUpdates(tencentLocationRequest, this);
+        tencentLocationManager.requestLocationUpdates(tencentLocationRequest, this);
     }
 
     // 初始化模拟定位的一些信息
@@ -306,7 +315,7 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
                     JSONObject json = new JSONObject(j);
                     jsonArray = json.getJSONArray("sprite_list");
                     formatPets(jsonArray);
-                    onClickAuto();
+                    onClickNext();
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
@@ -439,15 +448,9 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
         thread.start();
     }
 
-    // 这里主要是设置悬浮窗的一些配置
+    // 初始化控制悬浮窗
     private void initController() {
-        // 这里需要有悬浮窗的权限
-        if (Build.VERSION.SDK_INT >= 23) {
-            if (!Settings.canDrawOverlays(getApplicationContext())) {
-                floatWindowPermission();
-            }
-        }
-        windowManager = (WindowManager) getSystemService(WINDOW_SERVICE);
+        // 悬浮窗参数
         controllerLayoutParams = new WindowManager.LayoutParams();
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             controllerLayoutParams.type = WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY;
@@ -457,70 +460,71 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
         controllerLayoutParams.format = PixelFormat.RGBA_8888;
         controllerLayoutParams.flags = WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE;
         controllerLayoutParams.gravity = Gravity.START | Gravity.TOP;
-
-        metrics = new DisplayMetrics();
-        windowManager.getDefaultDisplay().getMetrics(metrics);
         // 这是悬浮窗的宽高
         controllerLayoutParams.width = dpi2pix(100);
-        controllerLayoutParams.height = dpi2pix(240);
+        controllerLayoutParams.height = dpi2pix(290);
         // 这是悬浮窗处于屏幕的位置
         controllerLayoutParams.x = metrics.widthPixels;
         controllerLayoutParams.y = metrics.heightPixels / 2 - dpi2pix(240) / 2;
+
+        // 悬浮窗各个组件
+        stopButton = controllerView.findViewById(R.id.stopButton);
+        autoButton = controllerView.findViewById(R.id.autoButton);
+        backButton = controllerView.findViewById(R.id.backButton);
+        filterButton = controllerView.findViewById(R.id.filterButton);
+        mapButton = controllerView.findViewById(R.id.mapButton);
+        nextButton = controllerView.findViewById(R.id.nextButton);
+        // 这里是控制移动速度的，有一个基础速度，然后根据速度条的位置增加相应的速度值
+        // 因为这里调用了其它layout内的元素，所以需要用LayoutInflater获取到对应的layout再操作
+        speedSeekBar = (SeekBar) controllerView.findViewById(R.id.speedSeekBar);
+        speedSeekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int i, boolean b) {
+                speed = baseSpeed + baseSpeed * (i / 10);
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+
+            }
+        });
+        // 摇杆功能，监听旋转角度，根据角度来进行方向移动
+        rockerView = controllerView.findViewById(R.id.rockerView);
+        rockerView.setCallBackMode(RockerView.CallBackMode.CALL_BACK_MODE_STATE_CHANGE);
+        rockerView.setOnAngleChangeListener(new RockerView.OnAngleChangeListener() {
+            @Override
+            public void onStart() {
+            }
+
+            @Override
+            public void angle(double v) {
+                angle = v;
+            }
+
+            @Override
+            public void onFinish() {
+
+            }
+        });
     }
 
+    // 显示控制悬浮窗
     private void showController() {
         if (Settings.canDrawOverlays(this)) {
             // 这就是去获取activity_controller，这样才能用它里面的元素
-            LayoutInflater layoutInflater = LayoutInflater.from(this);
-            controllerView = layoutInflater.inflate(R.layout.activity_controller, null);
-            stopButton = controllerView.findViewById(R.id.stopButton);
-            autoButton = controllerView.findViewById(R.id.autoButton);
-            backButton = controllerView.findViewById(R.id.backButton);
-            filterButton = controllerView.findViewById(R.id.filterButton);
-            // 这里是控制移动速度的，有一个基础速度，然后根据速度条的位置增加相应的速度值
-            // 因为这里调用了其它layout内的元素，所以需要用LayoutInflater获取到对应的layout再操作
-            speedSeekBar = (SeekBar) controllerView.findViewById(R.id.speedSeekBar);
-            speedSeekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-                @Override
-                public void onProgressChanged(SeekBar seekBar, int i, boolean b) {
-                    speed = baseSpeed + baseSpeed * (i / 10);
-                }
-
-                @Override
-                public void onStartTrackingTouch(SeekBar seekBar) {
-
-                }
-
-                @Override
-                public void onStopTrackingTouch(SeekBar seekBar) {
-
-                }
-            });
-            // 摇杆功能，监听旋转角度，根据角度来进行方向移动
-            rockerView = controllerView.findViewById(R.id.rockerView);
-            rockerView.setCallBackMode(RockerView.CallBackMode.CALL_BACK_MODE_STATE_CHANGE);
-            rockerView.setOnAngleChangeListener(new RockerView.OnAngleChangeListener() {
-                @Override
-                public void onStart() {
-                }
-
-                @Override
-                public void angle(double v) {
-                    angle = v;
-                }
-
-                @Override
-                public void onFinish() {
-
-                }
-            });
-
             windowManager.addView(controllerView, controllerLayoutParams);
         }
     }
 
     // 初始化筛选
     private void initFilter() {
+        headLinearLayout = (LinearLayout) filterView.findViewById(R.id.headLinearLayout);
+        // 筛选悬浮窗参数
         filterLayoutParams = new WindowManager.LayoutParams();
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             filterLayoutParams.type = WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY;
@@ -530,8 +534,6 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
         filterLayoutParams.format = PixelFormat.RGBA_8888;
         filterLayoutParams.flags = WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE;
         filterLayoutParams.gravity = Gravity.START | Gravity.TOP;
-        DisplayMetrics metrics = new DisplayMetrics();
-        windowManager.getDefaultDisplay().getMetrics(metrics);
         // 这是悬浮窗的宽高
         filterLayoutParams.width = metrics.widthPixels;
         filterLayoutParams.height = metrics.heightPixels;
@@ -566,14 +568,47 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
     private void showFilter() {
         if (Build.VERSION.SDK_INT > 22) {
             if (Settings.canDrawOverlays(this)) {
-                LayoutInflater layoutInflater = LayoutInflater.from(this);
-                filterView = layoutInflater.inflate(R.layout.activity_filter, null);
-                headLinearLayout = (LinearLayout) filterView.findViewById(R.id.headLinearLayout);
                 windowManager.addView(filterView, filterLayoutParams);
             }
         }
-        showPets();
+        //showPets();
     }
+    private void initFloatMap() {
+        floatMapViewParams = new WindowManager.LayoutParams();
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            floatMapViewParams.type = WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY;
+        } else {
+            floatMapViewParams.type = WindowManager.LayoutParams.TYPE_PHONE;
+        }
+        floatMapViewParams.format = PixelFormat.RGBA_8888;
+        floatMapViewParams.flags = WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE;
+        floatMapViewParams.gravity = Gravity.START | Gravity.TOP;
+        floatMapViewParams.width = metrics.widthPixels - 40;
+        floatMapViewParams.x = 40 / 2;
+        floatMapViewParams.height = metrics.heightPixels - 40 * (metrics.heightPixels / metrics.widthPixels);
+        floatMapViewParams.y = (metrics.heightPixels - floatMapViewParams.height) / 2;
+        LinearLayout floatMapLinearLayout = (LinearLayout)floatMapView.findViewById(R.id.floatmaplinearlayout);
+        LinearLayout.LayoutParams params = (LinearLayout.LayoutParams)floatMapLinearLayout.getLayoutParams();
+        params.width = floatMapViewParams.width;
+        params.height = floatMapViewParams.height - 200;
+        floatMapLinearLayout.setLayoutParams(params);
+        floatMapCloseButton = floatMapView.findViewById(R.id.closefloatmapbutton);
+        showFloatMap();
+    }
+
+    //显示地图悬浮窗
+    private void showFloatMap() {
+        if (Build.VERSION.SDK_INT > 22) {
+            if (Settings.canDrawOverlays(this)) {
+                windowManager.addView(floatMapView, floatMapViewParams);
+            }
+        }
+    }
+    //隐藏地图悬浮窗
+    private void removeFloatMap() {
+        windowManager.removeView(floatMapView);
+    }
+
     private void initPets() {
         // 获取assets下的小妖头像
         assetManager = this.getResources().getAssets();
@@ -664,8 +699,18 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
             case R.id.closeFilterButton:
                 removeFilter();
                 break;
+            case R.id.mapButton:
+                onClickFloatMap();
+                break;
+            case R.id.closefloatmapbutton:
+                removeFloatMap();
+                break;
+            case R.id.nextButton:
+                onClickNext();
+                break;
         }
     }
+    // dpi转pix
     private int dpi2pix(float dpi) {
         return (int)(dpi * metrics.density + 0.5f);
     }
@@ -678,12 +723,12 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
             // controllerLayoutParams.width = 260 / 2 - 10;
             controllerLayoutParams.width = dpi2pix(50);
             // controllerLayoutParams.height = (260 / 2 - 10) * 2;
-            controllerLayoutParams.height = dpi2pix(100);
+            controllerLayoutParams.height = dpi2pix(150);
             windowManager.updateViewLayout(controllerView, controllerLayoutParams);
             backButton.setText("开");
         } else {
             controllerLayoutParams.width = dpi2pix(100);
-            controllerLayoutParams.height = dpi2pix(240);
+            controllerLayoutParams.height = dpi2pix(290);
             windowManager.updateViewLayout(controllerView, controllerLayoutParams);
             backButton.setText("收");
         }
@@ -692,8 +737,14 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
     public void onClickFilter() {
         showFilter();
     }
+    private void onClickFloatMap() {
+        initFloatMap();
+    }
+    private void onClickAuto() {
+        getPets();
+    }
     // 自动到小妖身边
-    public void onClickAuto() {
+    public void onClickNext() {
         // 我这里逆序查找，因为，一般后台的妖灵都比较好
         double nextLatitude = 0;
         double nextLongtitude = 0;
@@ -978,5 +1029,10 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
                     }
                 })
                 .show();
+    }
+
+    // 获取下一次定位点
+    private void getNextLocation() {
+
     }
 }

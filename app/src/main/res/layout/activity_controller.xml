@@ -37,10 +37,10 @@
         <Button
             android:layout_width="50dp"
             android:layout_height="50dp"
-            android:background="#8D00BFFF"
+            android:background="#8D00FFFF"
             android:onClick="onClick"
-            android:id="@+id/autoButton"
-            android:text="自"
+            android:id="@+id/nextButton"
+            android:text="下"
             android:visibility="visible"
             tools:visibility="visible" />
         <Button
@@ -50,6 +50,29 @@
             android:onClick="onClick"
             android:id="@+id/stopButton"
             android:text="走"
+            android:visibility="visible"
+            tools:visibility="visible" />
+    </LinearLayout>
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+        <Button
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:background="#8D00BFFF"
+            android:onClick="onClick"
+            android:id="@+id/mapButton"
+            android:text="图"
+            android:visibility="visible"
+            tools:visibility="visible" />
+        <Button
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:background="#8D00BFFF"
+            android:onClick="onClick"
+            android:id="@+id/autoButton"
+            android:text="自"
             android:visibility="visible"
             tools:visibility="visible" />
     </LinearLayout>

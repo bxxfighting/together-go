@@ -6,16 +6,12 @@
     android:layout_height="match_parent"
     tools:context=".MainActivity">
 
-    <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-        xmlns:tools="http://schemas.android.com/tools"
+    <TextView
+        android:id="@+id/textView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        tools:context=".MainActivity" >
-
-        <com.tencent.tencentmap.mapsdk.map.MapView
-            android:id="@+id/mapview"
-            android:layout_width="fill_parent"
-            android:layout_height="fill_parent" />
-    </RelativeLayout>
-
+        android:gravity="center"
+        android:text="本软件仅用于学习交流使用\n主要学习点在于模拟定位、悬浮窗、地图等使用\n如有任何问题请联系作者交流解决\n请勿使用此软件进行任何违反任何规定的事情\n请勿使用此软件用于任何游戏中使用\n请勿破坏任何游戏平衡\n重申一遍：本软件仅用于学习、想法交流使用"
+        tools:layout_editor_absoluteX="112dp"
+        tools:layout_editor_absoluteY="214dp" />
 </androidx.constraintlayout.widget.ConstraintLayout>

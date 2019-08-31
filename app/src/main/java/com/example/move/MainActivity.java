@@ -16,6 +16,7 @@ import android.location.LocationManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Looper;
 import android.os.SystemClock;
 import android.provider.Settings;
 import android.util.DisplayMetrics;
@@ -182,12 +183,12 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
 
     private void init(Bundle savedInstanceState) {
         initPermission();
+        initMoveManager();
         // 初始化妖灵数据
         initPets();
         // 初始化各个控制窗口
         initWindowManager(savedInstanceState);
         initWebsocket();
-        initMoveManager();
         initLocation();
     }
 
@@ -882,14 +883,19 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
         if (Build.VERSION.SDK_INT > 16) {
             location.setElapsedRealtimeNanos(SystemClock.elapsedRealtimeNanos());
         }
-        locationManager.setTestProviderLocation(LocationManager.GPS_PROVIDER, location);
-    }
+        try {
+            locationManager.setTestProviderLocation(LocationManager.GPS_PROVIDER, location);
+        } catch (SecurityException e) {
+            simulateLocationPermission();
+        }
+}
 
     // 持续定位
     public void continueLocation() {
         thread = new Thread(new Runnable() {
             @Override
             public void run() {
+                Looper.prepare();
                 while (true) {
                     try {
                         // 这里是一个死循环，但是我们不可以直接不停的设置定位，那样会把手机卡死

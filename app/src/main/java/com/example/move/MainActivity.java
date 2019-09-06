@@ -235,7 +235,8 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
         tencentMap.setOnMapClickListener(new TencentMap.OnMapClickListener() {
             @Override
             public void onMapClick(final LatLng latLng) {
-                handleMapClick(latLng.getLatitude(), latLng.getLongitude());
+                //handleMapClick(latLng.getLatitude(), latLng.getLongitude());
+                getPets(latLng.getLatitude(), latLng.getLongitude());
             }
         });
         // 设置点击marker的事件监听
@@ -316,7 +317,7 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
                     JSONObject json = new JSONObject(j);
                     jsonArray = json.getJSONArray("sprite_list");
                     formatPets(jsonArray);
-                    onClickNext();
+                    //onClickNext();
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
@@ -395,15 +396,15 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
         isMarker = false;
     }
 
-    private void getPets() {
+    private void getPets(double lat, double lon) {
         clearPetsFromMap();
         toast = Toast.makeText(getApplicationContext(), "搜索中...", Toast.LENGTH_SHORT);
         toast.show();
         try {
             jsonObject = new JSONObject();
             jsonObject.put("request_type", "1001");
-            jsonObject.put("latitude", (int)(latitude*1000*1000));
-            jsonObject.put("longtitude", (int)(longtitude*1000*1000));
+            jsonObject.put("latitude", (int)(lat*1000*1000));
+            jsonObject.put("longtitude", (int)(lon*1000*1000));
             jsonObject.put("platform", 0);
             // 保证requestId为七位数字
             requestId = System.currentTimeMillis() % (10 * 1000 * 1000);
@@ -742,7 +743,7 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
         initFloatMap();
     }
     private void onClickAuto() {
-        getPets();
+        getPets(latitude, longtitude);
     }
     // 自动到小妖身边
     public void onClickNext() {
@@ -770,10 +771,10 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
                 moveTo(nextLatitude, nextLongtitude);
                 currentIndex --;
             } else {
-                getPets();
+                getPets(latitude, longtitude);
             }
         } else {
-            getPets();
+            getPets(latitude, longtitude);
         }
     }
     private void moveTo(final double lat, final double lon) {

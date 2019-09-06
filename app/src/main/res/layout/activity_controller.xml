@@ -37,10 +37,10 @@
         <Button
             android:layout_width="50dp"
             android:layout_height="50dp"
-            android:background="#8D00FFFF"
+            android:background="#8D00BFFF"
             android:onClick="onClick"
-            android:id="@+id/nextButton"
-            android:text="下"
+            android:id="@+id/mapButton"
+            android:text="图"
             android:visibility="visible"
             tools:visibility="visible" />
         <Button
@@ -60,10 +60,10 @@
         <Button
             android:layout_width="50dp"
             android:layout_height="50dp"
-            android:background="#8D00BFFF"
+            android:background="#8D00FFFF"
             android:onClick="onClick"
-            android:id="@+id/mapButton"
-            android:text="图"
+            android:id="@+id/nextButton"
+            android:text="下"
             android:visibility="visible"
             tools:visibility="visible" />
         <Button
@@ -72,7 +72,7 @@
             android:background="#8D00BFFF"
             android:onClick="onClick"
             android:id="@+id/autoButton"
-            android:text="自"
+            android:text="搜"
             android:visibility="visible"
             tools:visibility="visible" />
     </LinearLayout>

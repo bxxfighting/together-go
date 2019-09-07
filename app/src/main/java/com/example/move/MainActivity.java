@@ -482,7 +482,7 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
         speedSeekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int i, boolean b) {
-                speed = baseSpeed + baseSpeed * (i / 10);
+                speed = baseSpeed + baseSpeed * (i / 30);
             }
 
             @Override
@@ -888,7 +888,7 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
         } catch (SecurityException e) {
             simulateLocationPermission();
         }
-}
+    }
 
     // 持续定位
     public void continueLocation() {

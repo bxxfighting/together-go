@@ -5,9 +5,12 @@
     <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:id="@+id/headLinearLayout"
-        android:background="#FFeeeeee"
-        android:orientation="vertical" >
+        android:id="@+id/floatmaplinearlayout">
+        <com.tencent.tencentmap.mapsdk.map.MapView
+            android:id="@+id/floatmapview"
+            android:layout_width="wrap_content"
+            android:background="#55555555"
+            android:layout_height="wrap_content" />
     </LinearLayout>
     <Button
         android:layout_width="50dp"
@@ -15,6 +18,6 @@
         android:onClick="onClick"
         android:layout_gravity="center"
         android:background="@color/colorCloseButton"
-        android:id="@+id/closeFilterButton"
+        android:id="@+id/closefloatmapbutton"
         android:text="关闭"/>
 </LinearLayout>

@@ -7,7 +7,7 @@
     <color name="colorClickText">#FFFFFF</color>
     <color name="colorUnClick">#00FFFF</color>
     <color name="colorUnClickText">#000000</color>
-    <color name="colorCloseButton">#FF0000</color>
+    <color name="colorCloseButton">#C0C0C0</color>
     <color name="colorNextButon0">#FF1493</color>
     <color name="colorNextButon1">#00FFFF</color>
     <color name="colorNextButon2">#FF00FF</color>

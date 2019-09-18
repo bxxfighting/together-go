@@ -41,5 +41,4 @@ QQ群：687364516
 
 
 # 捉妖一个月成果展示(按资质排序)  
-<img display="inline-block" src="https://github.com/bxxfighting/together-go/blob/master/data/pets/WechatIMG451.jpeg" width="196" hegiht="400" />
-<img display="inline-block" src="https://github.com/bxxfighting/together-go/blob/master/data/pets/WechatIMG449.jpeg" width="196" hegiht="400" />
+<img display="inline-block" src="https://github.com/bxxfighting/together-go/blob/master/data/pets/WechatIMG451.jpeg" width="196" hegiht="400" /> <img display="inline-block" src="https://github.com/bxxfighting/together-go/blob/master/data/pets/WechatIMG449.jpeg" width="196" hegiht="400" />

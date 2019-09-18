@@ -41,4 +41,4 @@ QQ群：687364516
 
 
 # 捉妖一个月成果展示(按资质排序)  
-[]()
+[木偶娃娃(满)](https://github.com/bxxfighting/together-go/blob/master/data/pets/WechatIMG451.jpeg)

@@ -100,7 +100,7 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
     // 设置移动还是停下
     private int isRun = 0;
     private int isPatrol = 0;
-    private double patrolSpeed = 0.0000001;
+    private double patrolSpeed = 0.00000005;
     // 记录当前设置的定位值
     private double longtitude = 0;
     private double latitude = 0;
@@ -130,8 +130,8 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
     private RockerView rockerView;
     private double angle = 0;
     private int count = 1;
-    private int loop = 5000;
-    private int step = 500;
+    private int loop = 10000;
+    private int step = 5000;
     // 悬浮窗地图
     private View floatMapView;
     private WindowManager.LayoutParams floatMapViewParams;
@@ -361,6 +361,9 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
             try {
                 JSONObject pet = ja.getJSONObject(i);
                 int petId = pet.getInt("sprite_id");
+                if (!allPetSet.contains(petId)) {
+                    Log.i("NNNN:", String.valueOf(petId));
+                }
                 if (selectedPetSet.contains(petId)) {
                     double tmpNextLatitude = (double)pet.getInt("latitude") / (1000 * 1000);
                     double tmpNextLongtitude = (double)pet.getInt("longtitude") / (1000 * 1000);

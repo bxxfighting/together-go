@@ -100,6 +100,7 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
     // 设置移动还是停下
     private int isRun = 0;
     private int isPatrol = 0;
+    private double patrolSpeed = 0.00000002;
     // 记录当前设置的定位值
     private double longtitude = 0;
     private double latitude = 0;
@@ -129,8 +130,8 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
     private RockerView rockerView;
     private double angle = 0;
     private int count = 1;
-    private int loop = 1000;
-    private int step = 200;
+    private int loop = 5000;
+    private int step = 500;
     // 悬浮窗地图
     private View floatMapView;
     private WindowManager.LayoutParams floatMapViewParams;
@@ -945,17 +946,18 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
                                 angle %= 360;
                                 if (angle == 270) {
                                     loop += step;
+                                    count = 1;
                                 }
                             }
                             count += 1;
                             if (angle == 0) {
-                                longtitude += speed;
+                                longtitude += patrolSpeed;
                             } else if (angle == 90) {
-                                latitude -= speed;
+                                latitude -= patrolSpeed;
                             } else if (angle == 180) {
-                                longtitude -= speed;
+                                longtitude -= patrolSpeed;
                             } else if (angle == 270) {
-                                latitude += speed;
+                                latitude += patrolSpeed;
                             }
                         }
                     }

@@ -5,6 +5,7 @@ from airtest.core.api import *
 
 auto_setup(__file__)
 
+dev = device()
 
 def is_start_catch():
     try:
@@ -12,8 +13,12 @@ def is_start_catch():
             return True
     except:
         return False
+
+
 def throw_ball():
-    swipe((555, 1700), (555, 900), duration=0.1)
+    site_list = [(550, 1700), (250, 1600), (555, 1500), (850, 1600), (550, 1700), (250, 1500)]
+    dev.minitouch.swipe_along(site_list, duration=0.5)
+    # swipe((555, 1700), (555, 900), duration=0.1)
     
 def is_hold():
     try:

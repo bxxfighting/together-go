@@ -78,6 +78,20 @@
     </LinearLayout>
     <LinearLayout
         android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+        <Button
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:background="#8D00FFFF"
+            android:onClick="onClick"
+            android:id="@+id/patrolButton"
+            android:text="巡"
+            android:visibility="visible"
+            tools:visibility="visible" />
+    </LinearLayout>
+    <LinearLayout
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content">
         <com.kongqw.rockerlibrary.view.RockerView
             android:id="@+id/rockerView"

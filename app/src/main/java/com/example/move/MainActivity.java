@@ -99,6 +99,7 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
     private Thread thread;
     // 设置移动还是停下
     private int isRun = 0;
+    private int isPatrol = 0;
     // 记录当前设置的定位值
     private double longtitude = 0;
     private double latitude = 0;
@@ -119,6 +120,7 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
     private Button filterButton;
     private Button mapButton;
     private Button nextButton;
+    private Button patrolButton;
     // 定位范围
     private Button autoButton;
     private int autoCount = 0;
@@ -126,6 +128,9 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
     private int isBack = 0;
     private RockerView rockerView;
     private double angle = 0;
+    private int count = 1;
+    private int loop = 1000;
+    private int step = 200;
     // 悬浮窗地图
     private View floatMapView;
     private WindowManager.LayoutParams floatMapViewParams;
@@ -476,6 +481,7 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
         filterButton = controllerView.findViewById(R.id.filterButton);
         mapButton = controllerView.findViewById(R.id.mapButton);
         nextButton = controllerView.findViewById(R.id.nextButton);
+        patrolButton = controllerView.findViewById(R.id.patrolButton);
         // 这里是控制移动速度的，有一个基础速度，然后根据速度条的位置增加相应的速度值
         // 因为这里调用了其它layout内的元素，所以需要用LayoutInflater获取到对应的layout再操作
         speedSeekBar = (SeekBar) controllerView.findViewById(R.id.speedSeekBar);
@@ -710,6 +716,9 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
             case R.id.nextButton:
                 onClickNext();
                 break;
+            case R.id.patrolButton:
+                onPatrolClick();
+                break;
         }
     }
     // dpi转pix
@@ -911,22 +920,43 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
                     if (isRun % 2 == 1) {
                         // 这里设置四个方向，北：0、东：1、南：2、西：3
                         // 改变了方向就改变经纬度的变化策略
-                        if ( angle >= 0 && angle < 90) {
-                            double radinas = Math.toRadians(angle);
-                            latitude -= Math.sin(radinas) * speed;
-                            longtitude += Math.cos(radinas) * speed;
-                        } else if (angle >= 90 && angle < 180) {
-                            double radinas = Math.toRadians(180 - angle);
-                            latitude -= Math.sin(radinas) * speed;
-                            longtitude -= Math.cos(radinas) * speed;
-                        } else if (angle >= 180 && angle < 270) {
-                            double radinas = Math.toRadians(angle - 180);
-                            latitude += Math.sin(radinas) * speed;
-                            longtitude -= Math.cos(radinas) * speed;
+                        if (isPatrol % 2 == 0) {
+                            if ( angle >= 0 && angle < 90) {
+                                double radinas = Math.toRadians(angle);
+                                latitude -= Math.sin(radinas) * speed;
+                                longtitude += Math.cos(radinas) * speed;
+                            } else if (angle >= 90 && angle < 180) {
+                                double radinas = Math.toRadians(180 - angle);
+                                latitude -= Math.sin(radinas) * speed;
+                                longtitude -= Math.cos(radinas) * speed;
+                            } else if (angle >= 180 && angle < 270) {
+                                double radinas = Math.toRadians(angle - 180);
+                                latitude += Math.sin(radinas) * speed;
+                                longtitude -= Math.cos(radinas) * speed;
+                            } else {
+                                double radinas = Math.toRadians(360 - angle);
+                                latitude += Math.sin(radinas) * speed;
+                                longtitude += Math.cos(radinas) * speed;
+                            }
                         } else {
-                            double radinas = Math.toRadians(360 - angle);
-                            latitude += Math.sin(radinas) * speed;
-                            longtitude += Math.cos(radinas) * speed;
+                            // 每走多少步后换方向
+                            if (count % loop == 0) {
+                                angle += 90;
+                                angle %= 360;
+                                if (angle == 270) {
+                                    loop += step;
+                                }
+                            }
+                            count += 1;
+                            if (angle == 0) {
+                                longtitude += speed;
+                            } else if (angle == 90) {
+                                latitude -= speed;
+                            } else if (angle == 180) {
+                                longtitude -= speed;
+                            } else if (angle == 270) {
+                                latitude += speed;
+                            }
                         }
                     }
                     setLocation(longtitude, latitude);
@@ -934,6 +964,14 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
             }
         });
         thread.start();
+    }
+
+    // 巡逻
+    private void onPatrolClick() {
+        isRun += 1;
+        isPatrol += 1;
+        angle = 0;
+        count = 1;
     }
 
     private class GPS {

@@ -72,15 +72,17 @@ def click_around():
     max_x = 680
     min_y = 1000
     max_y = 1300
-    for i in range(100):
-        for j in range(100):
-            touch((min_x + i, min_y + j))
+    for i in range(5):
+        for j in range(5):
+            touch((min_x + i * 20 + 10, min_y + j * 20 + 10))
             if not is_main():
                 break
+    return True
 
 def run():
     while True:
-        click_around()
+        if click_around():
+            continue
         play_drum()
         catch_pet()
     

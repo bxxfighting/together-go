@@ -68,17 +68,20 @@ def is_main():
         return False
 
 def click_around():
-    # 370, 1000
-    # 680, 1000
-    # 370, 1300
-    # 680, 1300
-    touch((363, 1061))
+    min_x = 380
+    max_x = 680
+    min_y = 1000
+    max_y = 1300
+    for i in range(100):
+        for j in range(100):
+            touch((min_x + i, min_y + j))
+            if not is_main():
+                break
 
 def run():
     while True:
         click_around()
-        if not is_main():
-            play_drum()
-            catch_pet()
+        play_drum()
+        catch_pet()
     
 run()

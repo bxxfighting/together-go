@@ -977,6 +977,7 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
         isPatrol += 1;
         angle = 0;
         count = 1;
+        loop = 10000;
     }
 
     private class GPS {

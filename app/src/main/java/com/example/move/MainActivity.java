@@ -100,7 +100,7 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
     // 设置移动还是停下
     private int isRun = 0;
     private int isPatrol = 0;
-    private double patrolSpeed = 0.00000002;
+    private double patrolSpeed = 0.0000001;
     // 记录当前设置的定位值
     private double longtitude = 0;
     private double latitude = 0;
@@ -470,7 +470,7 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
         controllerLayoutParams.gravity = Gravity.START | Gravity.TOP;
         // 这是悬浮窗的宽高
         controllerLayoutParams.width = dpi2pix(100);
-        controllerLayoutParams.height = dpi2pix(290);
+        controllerLayoutParams.height = dpi2pix(340);
         // 这是悬浮窗处于屏幕的位置
         controllerLayoutParams.x = metrics.widthPixels;
         controllerLayoutParams.y = metrics.heightPixels / 2 - dpi2pix(240) / 2;

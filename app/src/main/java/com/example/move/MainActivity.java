@@ -735,12 +735,12 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
             // controllerLayoutParams.width = 260 / 2 - 10;
             controllerLayoutParams.width = dpi2pix(50);
             // controllerLayoutParams.height = (260 / 2 - 10) * 2;
-            controllerLayoutParams.height = dpi2pix(150);
+            controllerLayoutParams.height = dpi2pix(200);
             windowManager.updateViewLayout(controllerView, controllerLayoutParams);
             backButton.setText("开");
         } else {
             controllerLayoutParams.width = dpi2pix(100);
-            controllerLayoutParams.height = dpi2pix(290);
+            controllerLayoutParams.height = dpi2pix(340);
             windowManager.updateViewLayout(controllerView, controllerLayoutParams);
             backButton.setText("收");
         }

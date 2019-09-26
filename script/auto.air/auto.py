@@ -24,6 +24,9 @@ def is_hold():
         return False
     
 def hold_back():
+    back()
+    back()
+    back()
     try:
         if wait(Template(r"tpl1569424711527.png", record_pos=(-0.018, 0.76), resolution=(1080, 1920)), timeout=10):
             touch(Template(r"tpl1569424781833.png", record_pos=(-0.207, 0.781), resolution=(1080, 1920)))

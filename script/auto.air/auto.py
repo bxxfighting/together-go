@@ -74,7 +74,7 @@ def click_around():
     max_y = 1300
     for i in range(5):
         for j in range(5):
-            touch((min_x + i * 20 + 10, min_y + j * 20 + 10))
+            touch((min_x + i * 60 + 30, min_y + j * 60 + 30))
             if not is_main():
                 break
     return True

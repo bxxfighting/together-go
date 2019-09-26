@@ -7,9 +7,12 @@ auto_setup(__file__)
 
 dev = device()
 
+TYP_CATCH = 1
+TYP_DRUM = 2
+
 def is_start_catch():
     try:
-        if wait(Template(r"tpl1569426258398.png", record_pos=(-0.001, 0.632), resolution=(1080, 1920)), timeout=10):
+        if wait(Template(r"tpl1569426258398.png", record_pos=(-0.001, 0.632), resolution=(1080, 1920)), timeout=1):
             return True
     except:
         return False
@@ -39,7 +42,6 @@ def hold_back():
         pass
     
     
-    
 def back():
     keyevent("BACK")
 
@@ -54,7 +56,7 @@ def catch_pet():
             
 def is_drum():
     try:
-        if wait(Template(r"tpl1569427585001.png", record_pos=(0.017, 0.35), resolution=(1080, 1920)), timeout=2):
+        if wait(Template(r"tpl1569427585001.png", record_pos=(0.017, 0.35), resolution=(1080, 1920)), timeout=1):
             return True
     except:
         return False
@@ -72,6 +74,21 @@ def is_main():
     except:
         return False
 
+
+def is_what():
+    count = 0
+    while True:
+        try:
+            if is_drum():
+                return TYP_DRUM
+            elif is_start_catch():
+                return TYP_CATCH
+        except:
+            pass
+        count += 1
+        if count > 10:
+            return None
+
 def click_around():
     min_x = 380
     max_x = 680
@@ -88,7 +105,12 @@ def run():
     while True:
         if click_around():
             continue
-        play_drum()
-        catch_pet()
+        typ = is_what()
+        if typ == TYP_DRUM:
+            play_drum()
+        elif typ == TYP_CATCH:
+            catch_pet()
+        else:
+            back()
     
 run()

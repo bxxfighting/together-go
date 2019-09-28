@@ -86,7 +86,7 @@
             android:background="#8D00FFFF"
             android:onClick="onClick"
             android:id="@+id/patrolButton"
-            android:text="巡"
+            android:text="T"
             android:visibility="visible"
             tools:visibility="visible" />
     </LinearLayout>

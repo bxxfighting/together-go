@@ -51,8 +51,12 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -90,7 +94,9 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
     // 腾讯定位
     TencentLocationManager tencentLocationManager;
     TencentLocationRequest tencentLocationRequest;
-
+    private String appid = "wx19376645db21af08";
+    private String openid = "oxARK5FsOTbzKPPCBQ8bvTPSHUe4";
+    private String gwgo_token = "";
 
     private Random random;
     // 模拟定位
@@ -196,6 +202,7 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
         initWebsocket();
         initMoveManager();
         initLocation();
+        getToken();
     }
 
     private void initWindowManager(Bundle savedInstanceState) {
@@ -241,8 +248,8 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
         tencentMap.setOnMapClickListener(new TencentMap.OnMapClickListener() {
             @Override
             public void onMapClick(final LatLng latLng) {
-                handleMapClick(latLng.getLatitude(), latLng.getLongitude());
-                //getPets(latLng.getLatitude(), latLng.getLongitude());
+                //handleMapClick(latLng.getLatitude(), latLng.getLongitude());
+                getPets(latLng.getLatitude(), latLng.getLongitude());
             }
         });
         // 设置点击marker的事件监听
@@ -355,6 +362,35 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
         wsManager.startConnect();
     }
 
+    private void getToken() {
+        thread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    URL url = new URL("http://api.eiiku.com/zhuoyaoleida/api.php");
+                    HttpURLConnection conn = (HttpURLConnection)url.openConnection();
+                    conn.setReadTimeout(5000);
+                    conn.setConnectTimeout(5000);
+                    conn.setRequestMethod("GET");
+                    conn.connect();
+                    InputStream inputStream = null;
+                    BufferedReader reader = null;
+                    if (conn.getResponseCode() == HttpURLConnection.HTTP_OK) {
+                        inputStream = conn.getInputStream();
+                        reader = new BufferedReader(new InputStreamReader(inputStream));
+                        String result = reader.readLine();
+                        JSONObject data = new JSONObject(result);
+                        Log.i("token", data.toString());
+                        gwgo_token = data.get("gwgo_token").toString();
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+        thread.start();
+    }
+
     private void formatPets(JSONArray ja) {
         JSONArray tmpJsonArray = new JSONArray();
         for (int i = 0; i < ja.length(); i ++) {
@@ -415,9 +451,9 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
             jsonObject.put("latitude", (int)(lat*1000*1000));
             jsonObject.put("longtitude", (int)(lon*1000*1000));
             jsonObject.put("platform", 0);
-            jsonObject.put("appid", "wx19376645db21af08");
-            jsonObject.put("openid", "oxARK5FsOTbzKPPCBQ8bvTPSHUe4");
-            jsonObject.put("gwgo_token", "8520122870730752000");
+            jsonObject.put("appid", appid);
+            jsonObject.put("openid", openid);
+            jsonObject.put("gwgo_token", gwgo_token);
             // 保证requestId为七位数字
             requestId = System.currentTimeMillis() % (10 * 1000 * 1000);
             jsonObject.put("requestid", requestId);
@@ -724,7 +760,8 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
                 onClickNext();
                 break;
             case R.id.patrolButton:
-                onPatrolClick();
+                //onPatrolClick();
+                getToken();
                 break;
         }
     }
@@ -741,7 +778,7 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
             // controllerLayoutParams.width = 260 / 2 - 10;
             controllerLayoutParams.width = dpi2pix(50);
             // controllerLayoutParams.height = (260 / 2 - 10) * 2;
-            controllerLayoutParams.height = dpi2pix(200);
+            controllerLayoutParams.height = dpi2pix(150);
             windowManager.updateViewLayout(controllerView, controllerLayoutParams);
             backButton.setText("开");
         } else {

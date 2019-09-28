@@ -415,6 +415,9 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
             jsonObject.put("latitude", (int)(lat*1000*1000));
             jsonObject.put("longtitude", (int)(lon*1000*1000));
             jsonObject.put("platform", 0);
+            jsonObject.put("appid", "wx19376645db21af08");
+            jsonObject.put("openid", "oxARK5FsOTbzKPPCBQ8bvTPSHUe4");
+            jsonObject.put("gwgo_token", "8520122870730752000");
             // 保证requestId为七位数字
             requestId = System.currentTimeMillis() % (10 * 1000 * 1000);
             jsonObject.put("requestid", requestId);

@@ -95,7 +95,7 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
     TencentLocationManager tencentLocationManager;
     TencentLocationRequest tencentLocationRequest;
     private String appid = "wx19376645db21af08";
-    private String openid = "oxARK5FsOTbzKPPCBQ8bvTPSHUe4";
+    private String openid = "";
     private String gwgo_token = "";
 
     private Random random;
@@ -380,8 +380,9 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
                         reader = new BufferedReader(new InputStreamReader(inputStream));
                         String result = reader.readLine();
                         JSONObject data = new JSONObject(result);
-                        Log.i("token", data.toString());
+                        Log.i("gwgo_token", data.toString());
                         gwgo_token = data.get("gwgo_token").toString();
+                        openid = data.get("openid").toString();
                     }
                 } catch (Exception e) {
                     e.printStackTrace();

@@ -367,7 +367,8 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
             @Override
             public void run() {
                 try {
-                    URL url = new URL("http://api.eiiku.com/zhuoyaoleida/api.php");
+                    URL url = new URL("http://gt.buxingxing.com/api/v1/token");
+                    //URL url = new URL("http://api.eiiku.com/zhuoyaoleida/api.php");
                     HttpURLConnection conn = (HttpURLConnection)url.openConnection();
                     conn.setReadTimeout(5000);
                     conn.setConnectTimeout(5000);
@@ -379,10 +380,11 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
                         inputStream = conn.getInputStream();
                         reader = new BufferedReader(new InputStreamReader(inputStream));
                         String result = reader.readLine();
+                        Log.i("token_result", result);
                         JSONObject data = new JSONObject(result);
                         Log.i("gwgo_token", data.toString());
-                        gwgo_token = data.get("gwgo_token").toString();
-                        openid = data.get("openid").toString();
+                        gwgo_token = data.getJSONObject("data").get("token").toString();
+                        openid = data.getJSONObject("data").get("openid").toString();
                     }
                 } catch (Exception e) {
                     e.printStackTrace();

@@ -406,6 +406,22 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
         });
         wsManager.startConnect();
     }
+    private void onClickSave() {
+        new AlertDialog.Builder(this).setTitle("确定提交吗?")
+                .setPositiveButton("确定", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        setToken();
+                    }
+                })
+                .setNegativeButton("取消", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+
+                    }
+                })
+                .show();
+    }
 
     private void setToken() {
         thread = new Thread(new Runnable() {
@@ -856,7 +872,8 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
                 getToken();
                 break;
             case R.id.saveButton:
-                setToken();
+                onClickSave();
+                //setToken();
                 break;
         }
     }

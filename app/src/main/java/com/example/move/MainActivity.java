@@ -19,6 +19,8 @@ import android.os.Bundle;
 import android.os.Looper;
 import android.os.SystemClock;
 import android.provider.Settings;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.Gravity;
@@ -26,6 +28,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.SeekBar;
@@ -52,11 +55,13 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.BufferedReader;
+import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -183,11 +188,51 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
     private long checkRequestId;
     private Toast toast;
     // 触摸板
+    private Button saveButton;
+    private EditText openidText;
+    private EditText tokenText;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        saveButton = this.findViewById(R.id.saveButton);
+        openidText = this.findViewById(R.id.openidText);
+        openidText.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                openid = openidText.getText().toString();
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+
+            }
+        });
+        tokenText = this.findViewById(R.id.tokenText);
+        tokenText.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                gwgo_token = tokenText.getText().toString();
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+
+            }
+        });
+
         init(savedInstanceState);
         continueLocation();
         showController();
@@ -362,10 +407,51 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
         wsManager.startConnect();
     }
 
+    private void setToken() {
+        thread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    URL url = new URL("http://gt.buxingxing.com/api/v1/token");
+                    HttpURLConnection conn = (HttpURLConnection)url.openConnection();
+                    conn.setDoOutput(true);
+                    conn.setDoInput(true);
+                    conn.setReadTimeout(5000);
+                    conn.setConnectTimeout(5000);
+                    conn.setUseCaches(false);
+                    conn.setRequestMethod("POST");
+                    conn.setRequestProperty("Content-Type", "application/json");
+                    conn.connect();
+                    DataOutputStream out = new DataOutputStream(conn.getOutputStream());
+                    JSONObject body = new JSONObject();
+                    body.put("openid", openid);
+                    body.put("token", gwgo_token);
+                    String json = java.net.URLEncoder.encode(body.toString(), "utf-8");
+                    out.writeBytes(json);
+                    out.flush();
+                    out.close();
+                    BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+                    String lines;
+                    StringBuffer sb = new StringBuffer("");
+                    while((lines = reader.readLine()) != null) {
+                        lines = URLDecoder.decode(lines, "utf-8");
+                        sb.append(lines);
+                    }
+                    reader.close();
+                    conn.disconnect();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+        thread.start();
+    }
+
     private void getToken() {
         thread = new Thread(new Runnable() {
             @Override
             public void run() {
+                Looper.prepare();
                 try {
                     URL url = new URL("http://gt.buxingxing.com/api/v1/token");
                     //URL url = new URL("http://api.eiiku.com/zhuoyaoleida/api.php");
@@ -385,6 +471,8 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
                         Log.i("gwgo_token", data.toString());
                         gwgo_token = data.getJSONObject("data").get("token").toString();
                         openid = data.getJSONObject("data").get("openid").toString();
+                        openidText.setText(openid);
+                        tokenText.setText(gwgo_token);
                     }
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -764,7 +852,11 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
                 break;
             case R.id.patrolButton:
                 //onPatrolClick();
+                //setToken();
                 getToken();
+                break;
+            case R.id.saveButton:
+                setToken();
                 break;
         }
     }

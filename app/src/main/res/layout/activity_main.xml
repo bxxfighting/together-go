@@ -4,20 +4,45 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:orientation="vertical"
     tools:context=".MainActivity">
 
-    <TextView
-        android:id="@+id/textView"
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:gravity="center"
-        android:textColor="#FF0000"
-        android:text="本软件仅用于学习交流使用\n主要学习点在于模拟定位、悬浮窗、地图等使用\n
+        android:orientation="vertical">
+        <TextView
+            android:id="@+id/textView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:textColor="#FF0000"
+            android:text="本软件仅用于学习交流使用\n主要学习点在于模拟定位、悬浮窗、地图等使用\n
         如有任何问题请联系作者交流解决\n
         请勿使用此软件进行任何违反任何规定的事情\n
         请勿使用此软件用于任何游戏中使用\n
         请勿破坏任何游戏平衡\n重申一遍：本软件仅用于学习、想法交流使用\n
         而且虚拟定位可能短时间内位置偏移太多，导致封号惩罚"
-        tools:layout_editor_absoluteX="112dp"
-        tools:layout_editor_absoluteY="214dp" />
+            />
+        <EditText
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:id="@+id/openidText"
+            android:height="50dp"
+            android:hint="openid"/>
+        <EditText
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:id="@+id/tokenText"
+            android:height="50dp"
+            android:hint="token"/>
+        <Button
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:height="50dp"
+            android:id="@+id/saveButton"
+            android:onClick="onClick"
+            android:text="保存"/>
+
+    </LinearLayout>
 </androidx.constraintlayout.widget.ConstraintLayout>

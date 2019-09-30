@@ -191,6 +191,7 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
     private Button saveButton;
     private EditText openidText;
     private EditText tokenText;
+    private int saveStatus = 1;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -373,6 +374,15 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
                 String j = new String(buffer);
                 try {
                     JSONObject json = new JSONObject(j);
+                    int retcode = json.getInt("retcode");
+                    if (retcode == 0) {
+                        if (saveStatus == 2) {
+                            setToken();
+                        }
+                    } else {
+                        getToken();
+                    }
+                    saveStatus = 1;
                     jsonArray = json.getJSONArray("sprite_list");
                     formatPets(jsonArray);
                     //onClickNext();
@@ -411,7 +421,9 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
                 .setPositiveButton("确定", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        setToken();
+                        saveStatus = 2;
+                        getPets(latSpan, longtitude);
+                        //setToken();
                     }
                 })
                 .setNegativeButton("取消", new DialogInterface.OnClickListener() {

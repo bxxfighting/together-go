@@ -89,6 +89,15 @@
             android:text="T"
             android:visibility="visible"
             tools:visibility="visible" />
+        <Button
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:background="#8D00FFFF"
+            android:onClick="onClick"
+            android:id="@+id/modButton"
+            android:text="妖"
+            android:visibility="visible"
+            tools:visibility="visible" />
     </LinearLayout>
     <LinearLayout
         android:layout_width="wrap_content"

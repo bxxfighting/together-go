@@ -192,6 +192,9 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
     private EditText openidText;
     private EditText tokenText;
     private int saveStatus = 1;
+    // 模式
+    private int modType = 0;
+    private Button modButton;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -416,6 +419,26 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
         });
         wsManager.startConnect();
     }
+
+    private void onClickMod() {
+        modType += 1;
+        modType = modType % 4;
+        switch(modType) {
+            case 0:
+                modButton.setText("妖");
+                break;
+            case 1:
+                modButton.setText("鼓");
+                break;
+            case 2:
+                modButton.setText("擂");
+                break;
+            case 3:
+                modButton.setText("石");
+                break;
+        }
+    }
+
     private void onClickSave() {
         new AlertDialog.Builder(this).setTitle("确定提交吗?")
                 .setPositiveButton("确定", new DialogInterface.OnClickListener() {
@@ -644,6 +667,7 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
         mapButton = controllerView.findViewById(R.id.mapButton);
         nextButton = controllerView.findViewById(R.id.nextButton);
         patrolButton = controllerView.findViewById(R.id.patrolButton);
+        modButton = controllerView.findViewById(R.id.modButton);
         // 这里是控制移动速度的，有一个基础速度，然后根据速度条的位置增加相应的速度值
         // 因为这里调用了其它layout内的元素，所以需要用LayoutInflater获取到对应的layout再操作
         speedSeekBar = (SeekBar) controllerView.findViewById(R.id.speedSeekBar);
@@ -886,6 +910,9 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
             case R.id.saveButton:
                 onClickSave();
                 //setToken();
+                break;
+            case R.id.modButton:
+                onClickMod();
                 break;
         }
     }

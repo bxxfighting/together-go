@@ -170,8 +170,14 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
     private Set<Integer> selectedPetSet = new HashSet<>();
     private Set<String> petSet;
     private Set<String> drumSet;
+    private List<Double> drumLocations = new ArrayList<>();
+    private int drumIndex = 0;
     private Set<String> battlefieldSet;
+    private List<Double> battlefieldLocations = new ArrayList<>();
+    private int battlefieldIndex = 0;
     private Set<String> stoneSet;
+    private List<Double> stoneLocations = new ArrayList<>();
+    private int stoneIndex = 0;
     private SharedPreferences petSharedPreferences;
     private SharedPreferences.Editor editor;
     // 腾讯提供的获取坐标位置附近妖灵的websocket
@@ -766,6 +772,18 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
         for (String str : petSet) {
             selectedPetSet.add(Integer.valueOf(str));
         }
+        drumSet = new HashSet<String>(petSharedPreferences.getStringSet("drum", new HashSet<String>()));
+        for (String str : drumSet) {
+            drumLocations.add(Double.valueOf(str));
+        }
+        battlefieldSet = new HashSet<String>(petSharedPreferences.getStringSet("battlefield", new HashSet<String>()));
+        for (String str : battlefieldSet) {
+            battlefieldLocations.add(Double.valueOf(str));
+        }
+        stoneSet = new HashSet<String>(petSharedPreferences.getStringSet("stone", new HashSet<String>()));
+        for (String str : stoneSet) {
+            stoneLocations.add(Double.valueOf(str));
+        }
     }
 
     // 显示筛选界面
@@ -960,8 +978,38 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
         if (modType == 0) {
             getPets(latitude, longtitude);
         } else {
-            //存对应的位置
+            saveLocation();
         }
+    }
+    private void saveLocation() {
+        String sign = "";
+        Set<String> tmpSet = drumSet;
+        List<Double> tmpList = drumLocations;
+        switch (modType) {
+            case 1:
+                sign = "drum";
+                tmpSet = drumSet;
+                tmpList = drumLocations;
+                break;
+            case 2:
+                sign = "battlefield";
+                tmpSet = battlefieldSet;
+                tmpList = battlefieldLocations;
+                break;
+            case 3:
+                sign = "stone";
+                tmpSet = stoneSet;
+                tmpList = stoneLocations;
+                break;
+        }
+        tmpSet.add(String.valueOf(latitude));
+        tmpSet.add(String.valueOf(longtitude));
+        tmpList.add(latitude);
+        tmpList.add(longtitude);
+        editor.putStringSet(sign, tmpSet);
+        editor.commit();
+        Toast toast = Toast.makeText(getApplicationContext(), "保存成功", Toast.LENGTH_SHORT);
+        toast.show();
     }
     public void onClickNext() {
         if (modType == 0) {
@@ -975,10 +1023,34 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
         }
     }
     private void goToNextStone() {
+        if (stoneSet.size() > 0) {
+            moveTo(stoneLocations.get(stoneIndex), stoneLocations.get(stoneIndex+1));
+            stoneIndex += 2;
+            stoneIndex = stoneIndex % stoneSet.size();
+        } else {
+            Toast toast = Toast.makeText(getApplicationContext(), "暂无记录点", Toast.LENGTH_SHORT);
+            toast.show();
+        }
     }
     private void goToNextDrum() {
+        if (drumSet.size() > 0) {
+            moveTo(drumLocations.get(drumIndex), drumLocations.get(drumIndex+1));
+            drumIndex += 2;
+            drumIndex = drumIndex % drumSet.size();
+        } else {
+            Toast toast = Toast.makeText(getApplicationContext(), "暂无记录点", Toast.LENGTH_SHORT);
+            toast.show();
+        }
     }
     private void goToNextBattlefield() {
+        if (battlefieldSet.size() > 0) {
+            moveTo(battlefieldLocations.get(battlefieldIndex), battlefieldLocations.get(battlefieldIndex+1));
+            battlefieldIndex += 2;
+            battlefieldIndex = battlefieldIndex % battlefieldSet.size();
+        } else {
+            Toast toast = Toast.makeText(getApplicationContext(), "暂无记录点", Toast.LENGTH_SHORT);
+            toast.show();
+        }
     }
     // 自动到小妖身边
     public void goToNextPet() {

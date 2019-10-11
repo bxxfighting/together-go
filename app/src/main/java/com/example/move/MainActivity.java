@@ -169,6 +169,9 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
     private Set<Integer> allPetSet = new LinkedHashSet<>();
     private Set<Integer> selectedPetSet = new HashSet<>();
     private Set<String> petSet;
+    private Set<String> drumSet;
+    private Set<String> battlefieldSet;
+    private Set<String> stoneSet;
     private SharedPreferences petSharedPreferences;
     private SharedPreferences.Editor editor;
     // 腾讯提供的获取坐标位置附近妖灵的websocket
@@ -960,8 +963,25 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
             //存对应的位置
         }
     }
-    // 自动到小妖身边
     public void onClickNext() {
+        if (modType == 0) {
+            goToNextPet();
+        } else if (modType == 1){
+            goToNextDrum();
+        } else if (modType == 2) {
+            goToNextBattlefield();
+        } else if(modType == 3) {
+            goToNextStone();
+        }
+    }
+    private void goToNextStone() {
+    }
+    private void goToNextDrum() {
+    }
+    private void goToNextBattlefield() {
+    }
+    // 自动到小妖身边
+    public void goToNextPet() {
         // 我这里逆序查找，因为，一般后台的妖灵都比较好
         double nextLatitude = 0;
         double nextLongtitude = 0;

@@ -297,8 +297,11 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
         tencentMap.setOnMapClickListener(new TencentMap.OnMapClickListener() {
             @Override
             public void onMapClick(final LatLng latLng) {
-                //handleMapClick(latLng.getLatitude(), latLng.getLongitude());
-                getPets(latLng.getLatitude(), latLng.getLongitude());
+                if (modType == 0) {
+                    getPets(latLng.getLatitude(), latLng.getLongitude());
+                } else {
+                    handleMapClick(latLng.getLatitude(), latLng.getLongitude());
+                }
             }
         });
         // 设置点击marker的事件监听

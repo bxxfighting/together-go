@@ -429,15 +429,19 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
         switch(modType) {
             case 0:
                 modButton.setText("妖");
+                autoButton.setText("搜");
                 break;
             case 1:
                 modButton.setText("鼓");
+                autoButton.setText("存");
                 break;
             case 2:
                 modButton.setText("擂");
+                autoButton.setText("存");
                 break;
             case 3:
                 modButton.setText("石");
+                autoButton.setText("存");
                 break;
         }
     }
@@ -950,7 +954,11 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
         initFloatMap();
     }
     private void onClickAuto() {
-        getPets(latitude, longtitude);
+        if (modType == 0) {
+            getPets(latitude, longtitude);
+        } else {
+            //存对应的位置
+        }
     }
     // 自动到小妖身边
     public void onClickNext() {

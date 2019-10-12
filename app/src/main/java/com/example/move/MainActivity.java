@@ -774,15 +774,21 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
         }
         drumSet = new HashSet<String>(petSharedPreferences.getStringSet("drum", new HashSet<String>()));
         for (String str : drumSet) {
-            drumLocations.add(Double.valueOf(str));
+            String[] tmp = str.split(",");
+            drumLocations.add(Double.valueOf(tmp[0]));
+            drumLocations.add(Double.valueOf(tmp[1]));
         }
         battlefieldSet = new HashSet<String>(petSharedPreferences.getStringSet("battlefield", new HashSet<String>()));
         for (String str : battlefieldSet) {
-            battlefieldLocations.add(Double.valueOf(str));
+            String[] tmp = str.split(",");
+            battlefieldLocations.add(Double.valueOf(tmp[0]));
+            battlefieldLocations.add(Double.valueOf(tmp[1]));
         }
         stoneSet = new HashSet<String>(petSharedPreferences.getStringSet("stone", new HashSet<String>()));
         for (String str : stoneSet) {
-            stoneLocations.add(Double.valueOf(str));
+            String[] tmp = str.split(",");
+            stoneLocations.add(Double.valueOf(tmp[0]));
+            stoneLocations.add(Double.valueOf(tmp[1]));
         }
     }
 
@@ -1002,8 +1008,7 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
                 tmpList = stoneLocations;
                 break;
         }
-        tmpSet.add(String.valueOf(latitude));
-        tmpSet.add(String.valueOf(longtitude));
+        tmpSet.add( latitude + ","+ longtitude);
         tmpList.add(latitude);
         tmpList.add(longtitude);
         editor.putStringSet(sign, tmpSet);

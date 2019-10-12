@@ -169,13 +169,13 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
     private Set<Integer> allPetSet = new LinkedHashSet<>();
     private Set<Integer> selectedPetSet = new HashSet<>();
     private Set<String> petSet;
-    private Set<String> drumSet;
+    private String drums;
     private List<Double> drumLocations = new ArrayList<>();
     private int drumIndex = 0;
-    private Set<String> battlefieldSet;
+    private String battlefields;
     private List<Double> battlefieldLocations = new ArrayList<>();
     private int battlefieldIndex = 0;
-    private Set<String> stoneSet;
+    private String stones;
     private List<Double> stoneLocations = new ArrayList<>();
     private int stoneIndex = 0;
     private SharedPreferences petSharedPreferences;
@@ -772,23 +772,33 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
         for (String str : petSet) {
             selectedPetSet.add(Integer.valueOf(str));
         }
-        drumSet = new HashSet<String>(petSharedPreferences.getStringSet("drum", new HashSet<String>()));
-        for (String str : drumSet) {
-            String[] tmp = str.split(",");
-            drumLocations.add(Double.valueOf(tmp[0]));
-            drumLocations.add(Double.valueOf(tmp[1]));
+
+        drums = petSharedPreferences.getString("drum", "");
+        String [] tmpDrums = drums.split(",");
+        Log.i("tmptmp", String.valueOf(tmpDrums.length));
+        if (tmpDrums.length > 1) {
+            for (int i = 0; i < tmpDrums.length; i += 2) {
+                drumLocations.add(Double.valueOf(tmpDrums[i]));
+                drumLocations.add(Double.valueOf(tmpDrums[i+1]));
+            }
         }
-        battlefieldSet = new HashSet<String>(petSharedPreferences.getStringSet("battlefield", new HashSet<String>()));
-        for (String str : battlefieldSet) {
-            String[] tmp = str.split(",");
-            battlefieldLocations.add(Double.valueOf(tmp[0]));
-            battlefieldLocations.add(Double.valueOf(tmp[1]));
+
+        battlefields = petSharedPreferences.getString("battlefield", "");
+        String [] tmpBattlefields = battlefields.split(",");
+        if (tmpBattlefields.length > 1) {
+            for (int i = 0; i < tmpBattlefields.length; i += 2) {
+                battlefieldLocations.add(Double.valueOf(tmpBattlefields[i]));
+                battlefieldLocations.add(Double.valueOf(tmpBattlefields[i+1]));
+            }
         }
-        stoneSet = new HashSet<String>(petSharedPreferences.getStringSet("stone", new HashSet<String>()));
-        for (String str : stoneSet) {
-            String[] tmp = str.split(",");
-            stoneLocations.add(Double.valueOf(tmp[0]));
-            stoneLocations.add(Double.valueOf(tmp[1]));
+
+        stones = petSharedPreferences.getString("stone", "");
+        String [] tmpStones = stones.split(",");
+        if (tmpStones.length > 1) {
+            for (int i = 0; i < tmpStones.length; i += 2) {
+                stoneLocations.add(Double.valueOf(tmpStones[i]));
+                stoneLocations.add(Double.valueOf(tmpStones[i+1]));
+            }
         }
     }
 
@@ -988,31 +998,44 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
         }
     }
     private void saveLocation() {
-        String sign = "";
-        Set<String> tmpSet = drumSet;
-        List<Double> tmpList = drumLocations;
+        if (latitude < 1 || longtitude < 1) {
+            return;
+        }
         switch (modType) {
             case 1:
-                sign = "drum";
-                tmpSet = drumSet;
-                tmpList = drumLocations;
+                if (drums == "") {
+                    drums = latitude + ","+ longtitude;
+                } else {
+                    drums = drums + "," + latitude + ","+ longtitude;
+                }
+                drumLocations.add(latitude);
+                drumLocations.add(longtitude);
+                editor.putString("drum", drums);
+                editor.commit();
                 break;
             case 2:
-                sign = "battlefield";
-                tmpSet = battlefieldSet;
-                tmpList = battlefieldLocations;
+                if (battlefields == "") {
+                    battlefields = latitude + ","+ longtitude;
+                } else {
+                    battlefields = battlefields + "," + latitude + ","+ longtitude;
+                }
+                battlefieldLocations.add(latitude);
+                battlefieldLocations.add(longtitude);
+                editor.putString("battlefield", battlefields);
+                editor.commit();
                 break;
             case 3:
-                sign = "stone";
-                tmpSet = stoneSet;
-                tmpList = stoneLocations;
+                if (stones == "") {
+                    stones = latitude + ","+ longtitude;
+                } else {
+                    stones = stones + "," + latitude + ","+ longtitude;
+                }
+                stoneLocations.add(latitude);
+                stoneLocations.add(longtitude);
+                editor.putString("stone", battlefields);
+                editor.commit();
                 break;
         }
-        tmpSet.add( latitude + ","+ longtitude);
-        tmpList.add(latitude);
-        tmpList.add(longtitude);
-        editor.putStringSet(sign, tmpSet);
-        editor.commit();
         Toast toast = Toast.makeText(getApplicationContext(), "保存成功", Toast.LENGTH_SHORT);
         toast.show();
     }
@@ -1028,30 +1051,30 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
         }
     }
     private void goToNextStone() {
-        if (stoneSet.size() > 0) {
+        if (stoneLocations.size() > 0) {
             moveTo(stoneLocations.get(stoneIndex), stoneLocations.get(stoneIndex+1));
             stoneIndex += 2;
-            stoneIndex = stoneIndex % stoneSet.size();
+            stoneIndex = stoneIndex % stoneLocations.size();
         } else {
             Toast toast = Toast.makeText(getApplicationContext(), "暂无记录点", Toast.LENGTH_SHORT);
             toast.show();
         }
     }
     private void goToNextDrum() {
-        if (drumSet.size() > 0) {
+        if (drumLocations.size() > 0) {
             moveTo(drumLocations.get(drumIndex), drumLocations.get(drumIndex+1));
             drumIndex += 2;
-            drumIndex = drumIndex % drumSet.size();
+            drumIndex = drumIndex % drumLocations.size();
         } else {
             Toast toast = Toast.makeText(getApplicationContext(), "暂无记录点", Toast.LENGTH_SHORT);
             toast.show();
         }
     }
     private void goToNextBattlefield() {
-        if (battlefieldSet.size() > 0) {
+        if (battlefieldLocations.size() > 0) {
             moveTo(battlefieldLocations.get(battlefieldIndex), battlefieldLocations.get(battlefieldIndex+1));
             battlefieldIndex += 2;
-            battlefieldIndex = battlefieldIndex % battlefieldSet.size();
+            battlefieldIndex = battlefieldIndex % battlefieldLocations.size();
         } else {
             Toast toast = Toast.makeText(getApplicationContext(), "暂无记录点", Toast.LENGTH_SHORT);
             toast.show();

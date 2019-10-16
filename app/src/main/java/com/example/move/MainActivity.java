@@ -1032,7 +1032,7 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
                 }
                 stoneLocations.add(latitude);
                 stoneLocations.add(longtitude);
-                editor.putString("stone", battlefields);
+                editor.putString("stone", stones);
                 editor.commit();
                 break;
         }

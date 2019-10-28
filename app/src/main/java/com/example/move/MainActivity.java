@@ -71,6 +71,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
+import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 import okhttp3.OkHttpClient;
@@ -204,6 +208,8 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
     // 模式
     private int modType = 0;
     private Button modButton;
+    // 线程池
+    private ExecutorService fixedThreadPool = new ThreadPoolExecutor(5, 5, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<Runnable>());
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -247,7 +253,7 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
         });
 
         init(savedInstanceState);
-        continueLocation();
+        continueLocation2();
         showController();
     }
 
@@ -475,7 +481,7 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
     }
 
     private void setToken() {
-        thread = new Thread(new Runnable() {
+        Runnable runnable = new Runnable() {
             @Override
             public void run() {
                 try {
@@ -510,15 +516,15 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
                     e.printStackTrace();
                 }
             }
-        });
-        thread.start();
+        };
+        fixedThreadPool.execute(runnable);
     }
 
     private void getToken() {
-        thread = new Thread(new Runnable() {
+        Runnable runnable = new Runnable() {
             @Override
             public void run() {
-                Looper.prepare();
+                //Looper.prepare();
                 try {
                     URL url = new URL("http://gt.buxingxing.com/api/v1/token");
                     //URL url = new URL("http://api.eiiku.com/zhuoyaoleida/api.php");
@@ -545,8 +551,8 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
                     e.printStackTrace();
                 }
             }
-        });
-        thread.start();
+        };
+        fixedThreadPool.execute(runnable);
     }
 
     private void formatPets(JSONArray ja) {
@@ -634,7 +640,7 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
         // }
         // wsManager.sendMessage(bytes);
 
-        Thread thread = new Thread(new Runnable() {
+        Runnable runnable = new Runnable() {
             @Override
             public void run() {
                 requestSuccess = false;
@@ -652,8 +658,8 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
                     }
                 }
             }
-        });
-        thread.start();
+        };
+        fixedThreadPool.execute(runnable);
     }
 
     // 初始化控制悬浮窗
@@ -1113,7 +1119,7 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
         }
     }
     private void moveTo(final double lat, final double lon) {
-        Thread moveThread = new Thread(new Runnable() {
+        Runnable runnable =  new Runnable() {
             @Override
             public void run() {
                 final double latitudeStep = (lat - latitude) / 3000;
@@ -1127,13 +1133,14 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
                     }
                     latitude += latitudeStep;
                     longtitude += longtitudeStep;
+                    //setLocation(latitude, longtitude);
                 }
                 // 最后直接将要去的坐标进行赋值，保证是正确的位置
                 latitude = lat;
                 longtitude = lon;
             }
-        });
-        moveThread.start();
+        };
+        fixedThreadPool.execute(runnable);
     }
     // 控制走与停的方法，由stopButton调用
     public void onClickOnOff() {
@@ -1223,6 +1230,73 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
         } catch (SecurityException e) {
             simulateLocationPermission();
         }
+    }
+
+    public void continueLocation2() {
+        Runnable runnable = new Runnable() {
+            @Override
+            public void run() {
+                Looper.prepare();
+                while (true) {
+                    try {
+                        // 这里是一个死循环，但是我们不可以直接不停的设置定位，那样会把手机卡死
+                        // 因此我们这里需要设置两次设置定位的间隔, 但是这个值又不能设置大了，
+                        // 因为，两次定位之间间隔长了，在这个时间窗口有其它程序调用定位功能，就会获取到你真实的位置
+                        // 从而导致，位置出现跳跃的现象，我这里设置1毫秒
+                        Thread.sleep(1);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                    // isRun是来判断我们是不是要停下来，记住，这里停下来的概念是，你的位置坐标不变的意思，
+                    // 因此，要达到这个效果，并不是要把线程停下来，而是要不停的给设置同一位置坐标
+                    if (isRun % 2 == 1) {
+                        // 这里设置四个方向，北：0、东：1、南：2、西：3
+                        // 改变了方向就改变经纬度的变化策略
+                        if (isPatrol % 2 == 0) {
+                            if ( angle >= 0 && angle < 90) {
+                                double radinas = Math.toRadians(angle);
+                                latitude -= Math.sin(radinas) * speed;
+                                longtitude += Math.cos(radinas) * speed;
+                            } else if (angle >= 90 && angle < 180) {
+                                double radinas = Math.toRadians(180 - angle);
+                                latitude -= Math.sin(radinas) * speed;
+                                longtitude -= Math.cos(radinas) * speed;
+                            } else if (angle >= 180 && angle < 270) {
+                                double radinas = Math.toRadians(angle - 180);
+                                latitude += Math.sin(radinas) * speed;
+                                longtitude -= Math.cos(radinas) * speed;
+                            } else {
+                                double radinas = Math.toRadians(360 - angle);
+                                latitude += Math.sin(radinas) * speed;
+                                longtitude += Math.cos(radinas) * speed;
+                            }
+                        } else {
+                            // 每走多少步后换方向
+                            if (count % loop == 0) {
+                                angle += 90;
+                                angle %= 360;
+                                if (angle == 270) {
+                                    loop += step;
+                                    count = 1;
+                                }
+                            }
+                            count += 1;
+                            if (angle == 0) {
+                                longtitude += patrolSpeed;
+                            } else if (angle == 90) {
+                                latitude -= patrolSpeed;
+                            } else if (angle == 180) {
+                                longtitude -= patrolSpeed;
+                            } else if (angle == 270) {
+                                latitude += patrolSpeed;
+                            }
+                        }
+                    }
+                    setLocation(longtitude, latitude);
+                }
+            }
+        };
+        fixedThreadPool.execute(runnable);
     }
 
     // 持续定位

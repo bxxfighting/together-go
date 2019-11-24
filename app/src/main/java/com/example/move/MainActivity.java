@@ -19,6 +19,8 @@ import android.os.Bundle;
 import android.os.Looper;
 import android.os.SystemClock;
 import android.provider.Settings;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.Gravity;
@@ -26,6 +28,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.SeekBar;
@@ -52,11 +55,13 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.BufferedReader;
+import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -66,6 +71,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
+import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 import okhttp3.OkHttpClient;
@@ -164,6 +173,15 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
     private Set<Integer> allPetSet = new LinkedHashSet<>();
     private Set<Integer> selectedPetSet = new HashSet<>();
     private Set<String> petSet;
+    private String drums;
+    private List<Double> drumLocations = new ArrayList<>();
+    private int drumIndex = 0;
+    private String battlefields;
+    private List<Double> battlefieldLocations = new ArrayList<>();
+    private int battlefieldIndex = 0;
+    private String stones;
+    private List<Double> stoneLocations = new ArrayList<>();
+    private int stoneIndex = 0;
     private SharedPreferences petSharedPreferences;
     private SharedPreferences.Editor editor;
     // 腾讯提供的获取坐标位置附近妖灵的websocket
@@ -183,13 +201,59 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
     private long checkRequestId;
     private Toast toast;
     // 触摸板
+    private Button saveButton;
+    private EditText openidText;
+    private EditText tokenText;
+    private int saveStatus = 1;
+    // 模式
+    private int modType = 0;
+    private Button modButton;
+    // 线程池
+    private ExecutorService fixedThreadPool = new ThreadPoolExecutor(5, 5, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<Runnable>());
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        saveButton = this.findViewById(R.id.saveButton);
+        openidText = this.findViewById(R.id.openidText);
+        openidText.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                openid = openidText.getText().toString();
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+
+            }
+        });
+        tokenText = this.findViewById(R.id.tokenText);
+        tokenText.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                gwgo_token = tokenText.getText().toString();
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+
+            }
+        });
+
         init(savedInstanceState);
-        continueLocation();
+        continueLocation2();
         showController();
     }
 
@@ -248,8 +312,11 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
         tencentMap.setOnMapClickListener(new TencentMap.OnMapClickListener() {
             @Override
             public void onMapClick(final LatLng latLng) {
-                //handleMapClick(latLng.getLatitude(), latLng.getLongitude());
-                getPets(latLng.getLatitude(), latLng.getLongitude());
+                if (modType == 0) {
+                    getPets(latLng.getLatitude(), latLng.getLongitude());
+                } else {
+                    handleMapClick(latLng.getLatitude(), latLng.getLongitude());
+                }
             }
         });
         // 设置点击marker的事件监听
@@ -328,6 +395,15 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
                 String j = new String(buffer);
                 try {
                     JSONObject json = new JSONObject(j);
+                    int retcode = json.getInt("retcode");
+                    if (retcode == 0) {
+                        if (saveStatus == 2) {
+                            setToken();
+                        }
+                    } else {
+                        getToken();
+                    }
+                    saveStatus = 1;
                     jsonArray = json.getJSONArray("sprite_list");
                     formatPets(jsonArray);
                     //onClickNext();
@@ -362,10 +438,93 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
         wsManager.startConnect();
     }
 
-    private void getToken() {
-        thread = new Thread(new Runnable() {
+    private void onClickMod() {
+        modType += 1;
+        modType = modType % 4;
+        switch(modType) {
+            case 0:
+                modButton.setText("妖");
+                autoButton.setText("搜");
+                break;
+            case 1:
+                modButton.setText("鼓");
+                autoButton.setText("存");
+                break;
+            case 2:
+                modButton.setText("擂");
+                autoButton.setText("存");
+                break;
+            case 3:
+                modButton.setText("石");
+                autoButton.setText("存");
+                break;
+        }
+    }
+
+    private void onClickSave() {
+        new AlertDialog.Builder(this).setTitle("确定提交吗?")
+                .setPositiveButton("确定", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        saveStatus = 2;
+                        getPets(latSpan, longtitude);
+                        //setToken();
+                    }
+                })
+                .setNegativeButton("取消", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+
+                    }
+                })
+                .show();
+    }
+
+    private void setToken() {
+        Runnable runnable = new Runnable() {
             @Override
             public void run() {
+                try {
+                    URL url = new URL("http://gt.buxingxing.com/api/v1/token");
+                    HttpURLConnection conn = (HttpURLConnection)url.openConnection();
+                    conn.setDoOutput(true);
+                    conn.setDoInput(true);
+                    conn.setReadTimeout(5000);
+                    conn.setConnectTimeout(5000);
+                    conn.setUseCaches(false);
+                    conn.setRequestMethod("POST");
+                    conn.setRequestProperty("Content-Type", "application/json");
+                    conn.connect();
+                    DataOutputStream out = new DataOutputStream(conn.getOutputStream());
+                    JSONObject body = new JSONObject();
+                    body.put("openid", openid);
+                    body.put("token", gwgo_token);
+                    String json = java.net.URLEncoder.encode(body.toString(), "utf-8");
+                    out.writeBytes(json);
+                    out.flush();
+                    out.close();
+                    BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+                    String lines;
+                    StringBuffer sb = new StringBuffer("");
+                    while((lines = reader.readLine()) != null) {
+                        lines = URLDecoder.decode(lines, "utf-8");
+                        sb.append(lines);
+                    }
+                    reader.close();
+                    conn.disconnect();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        };
+        fixedThreadPool.execute(runnable);
+    }
+
+    private void getToken() {
+        Runnable runnable = new Runnable() {
+            @Override
+            public void run() {
+                //Looper.prepare();
                 try {
                     URL url = new URL("http://gt.buxingxing.com/api/v1/token");
                     //URL url = new URL("http://api.eiiku.com/zhuoyaoleida/api.php");
@@ -385,13 +544,15 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
                         Log.i("gwgo_token", data.toString());
                         gwgo_token = data.getJSONObject("data").get("token").toString();
                         openid = data.getJSONObject("data").get("openid").toString();
+                        openidText.setText(openid);
+                        tokenText.setText(gwgo_token);
                     }
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
             }
-        });
-        thread.start();
+        };
+        fixedThreadPool.execute(runnable);
     }
 
     private void formatPets(JSONArray ja) {
@@ -479,7 +640,7 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
         // }
         // wsManager.sendMessage(bytes);
 
-        Thread thread = new Thread(new Runnable() {
+        Runnable runnable = new Runnable() {
             @Override
             public void run() {
                 requestSuccess = false;
@@ -497,8 +658,8 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
                     }
                 }
             }
-        });
-        thread.start();
+        };
+        fixedThreadPool.execute(runnable);
     }
 
     // 初始化控制悬浮窗
@@ -528,6 +689,7 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
         mapButton = controllerView.findViewById(R.id.mapButton);
         nextButton = controllerView.findViewById(R.id.nextButton);
         patrolButton = controllerView.findViewById(R.id.patrolButton);
+        modButton = controllerView.findViewById(R.id.modButton);
         // 这里是控制移动速度的，有一个基础速度，然后根据速度条的位置增加相应的速度值
         // 因为这里调用了其它layout内的元素，所以需要用LayoutInflater获取到对应的layout再操作
         speedSeekBar = (SeekBar) controllerView.findViewById(R.id.speedSeekBar);
@@ -615,6 +777,34 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
         petSet = new HashSet<String>(petSharedPreferences.getStringSet("selected", new HashSet<String>()));
         for (String str : petSet) {
             selectedPetSet.add(Integer.valueOf(str));
+        }
+
+        drums = petSharedPreferences.getString("drum", "");
+        String [] tmpDrums = drums.split(",");
+        Log.i("tmptmp", String.valueOf(tmpDrums.length));
+        if (tmpDrums.length > 1) {
+            for (int i = 0; i < tmpDrums.length; i += 2) {
+                drumLocations.add(Double.valueOf(tmpDrums[i]));
+                drumLocations.add(Double.valueOf(tmpDrums[i+1]));
+            }
+        }
+
+        battlefields = petSharedPreferences.getString("battlefield", "");
+        String [] tmpBattlefields = battlefields.split(",");
+        if (tmpBattlefields.length > 1) {
+            for (int i = 0; i < tmpBattlefields.length; i += 2) {
+                battlefieldLocations.add(Double.valueOf(tmpBattlefields[i]));
+                battlefieldLocations.add(Double.valueOf(tmpBattlefields[i+1]));
+            }
+        }
+
+        stones = petSharedPreferences.getString("stone", "");
+        String [] tmpStones = stones.split(",");
+        if (tmpStones.length > 1) {
+            for (int i = 0; i < tmpStones.length; i += 2) {
+                stoneLocations.add(Double.valueOf(tmpStones[i]));
+                stoneLocations.add(Double.valueOf(tmpStones[i+1]));
+            }
         }
     }
 
@@ -764,7 +954,15 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
                 break;
             case R.id.patrolButton:
                 //onPatrolClick();
+                //setToken();
                 getToken();
+                break;
+            case R.id.saveButton:
+                onClickSave();
+                //setToken();
+                break;
+            case R.id.modButton:
+                onClickMod();
                 break;
         }
     }
@@ -799,10 +997,97 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
         initFloatMap();
     }
     private void onClickAuto() {
-        getPets(latitude, longtitude);
+        if (modType == 0) {
+            getPets(latitude, longtitude);
+        } else {
+            saveLocation();
+        }
+    }
+    private void saveLocation() {
+        if (latitude < 1 || longtitude < 1) {
+            return;
+        }
+        switch (modType) {
+            case 1:
+                if (drums == "") {
+                    drums = latitude + ","+ longtitude;
+                } else {
+                    drums = drums + "," + latitude + ","+ longtitude;
+                }
+                drumLocations.add(latitude);
+                drumLocations.add(longtitude);
+                editor.putString("drum", drums);
+                editor.commit();
+                break;
+            case 2:
+                if (battlefields == "") {
+                    battlefields = latitude + ","+ longtitude;
+                } else {
+                    battlefields = battlefields + "," + latitude + ","+ longtitude;
+                }
+                battlefieldLocations.add(latitude);
+                battlefieldLocations.add(longtitude);
+                editor.putString("battlefield", battlefields);
+                editor.commit();
+                break;
+            case 3:
+                if (stones == "") {
+                    stones = latitude + ","+ longtitude;
+                } else {
+                    stones = stones + "," + latitude + ","+ longtitude;
+                }
+                stoneLocations.add(latitude);
+                stoneLocations.add(longtitude);
+                editor.putString("stone", stones);
+                editor.commit();
+                break;
+        }
+        Toast toast = Toast.makeText(getApplicationContext(), "保存成功", Toast.LENGTH_SHORT);
+        toast.show();
+    }
+    public void onClickNext() {
+        if (modType == 0) {
+            goToNextPet();
+        } else if (modType == 1){
+            goToNextDrum();
+        } else if (modType == 2) {
+            goToNextBattlefield();
+        } else if(modType == 3) {
+            goToNextStone();
+        }
+    }
+    private void goToNextStone() {
+        if (stoneLocations.size() > 0) {
+            moveTo(stoneLocations.get(stoneIndex), stoneLocations.get(stoneIndex+1));
+            stoneIndex += 2;
+            stoneIndex = stoneIndex % stoneLocations.size();
+        } else {
+            Toast toast = Toast.makeText(getApplicationContext(), "暂无记录点", Toast.LENGTH_SHORT);
+            toast.show();
+        }
+    }
+    private void goToNextDrum() {
+        if (drumLocations.size() > 0) {
+            moveTo(drumLocations.get(drumIndex), drumLocations.get(drumIndex+1));
+            drumIndex += 2;
+            drumIndex = drumIndex % drumLocations.size();
+        } else {
+            Toast toast = Toast.makeText(getApplicationContext(), "暂无记录点", Toast.LENGTH_SHORT);
+            toast.show();
+        }
+    }
+    private void goToNextBattlefield() {
+        if (battlefieldLocations.size() > 0) {
+            moveTo(battlefieldLocations.get(battlefieldIndex), battlefieldLocations.get(battlefieldIndex+1));
+            battlefieldIndex += 2;
+            battlefieldIndex = battlefieldIndex % battlefieldLocations.size();
+        } else {
+            Toast toast = Toast.makeText(getApplicationContext(), "暂无记录点", Toast.LENGTH_SHORT);
+            toast.show();
+        }
     }
     // 自动到小妖身边
-    public void onClickNext() {
+    public void goToNextPet() {
         // 我这里逆序查找，因为，一般后台的妖灵都比较好
         double nextLatitude = 0;
         double nextLongtitude = 0;
@@ -834,7 +1119,7 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
         }
     }
     private void moveTo(final double lat, final double lon) {
-        Thread moveThread = new Thread(new Runnable() {
+        Runnable runnable =  new Runnable() {
             @Override
             public void run() {
                 final double latitudeStep = (lat - latitude) / 3000;
@@ -848,13 +1133,14 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
                     }
                     latitude += latitudeStep;
                     longtitude += longtitudeStep;
+                    //setLocation(latitude, longtitude);
                 }
                 // 最后直接将要去的坐标进行赋值，保证是正确的位置
                 latitude = lat;
                 longtitude = lon;
             }
-        });
-        moveThread.start();
+        };
+        fixedThreadPool.execute(runnable);
     }
     // 控制走与停的方法，由stopButton调用
     public void onClickOnOff() {
@@ -944,6 +1230,73 @@ public class MainActivity extends AppCompatActivity implements TencentLocationLi
         } catch (SecurityException e) {
             simulateLocationPermission();
         }
+    }
+
+    public void continueLocation2() {
+        Runnable runnable = new Runnable() {
+            @Override
+            public void run() {
+                Looper.prepare();
+                while (true) {
+                    try {
+                        // 这里是一个死循环，但是我们不可以直接不停的设置定位，那样会把手机卡死
+                        // 因此我们这里需要设置两次设置定位的间隔, 但是这个值又不能设置大了，
+                        // 因为，两次定位之间间隔长了，在这个时间窗口有其它程序调用定位功能，就会获取到你真实的位置
+                        // 从而导致，位置出现跳跃的现象，我这里设置1毫秒
+                        Thread.sleep(1);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                    // isRun是来判断我们是不是要停下来，记住，这里停下来的概念是，你的位置坐标不变的意思，
+                    // 因此，要达到这个效果，并不是要把线程停下来，而是要不停的给设置同一位置坐标
+                    if (isRun % 2 == 1) {
+                        // 这里设置四个方向，北：0、东：1、南：2、西：3
+                        // 改变了方向就改变经纬度的变化策略
+                        if (isPatrol % 2 == 0) {
+                            if ( angle >= 0 && angle < 90) {
+                                double radinas = Math.toRadians(angle);
+                                latitude -= Math.sin(radinas) * speed;
+                                longtitude += Math.cos(radinas) * speed;
+                            } else if (angle >= 90 && angle < 180) {
+                                double radinas = Math.toRadians(180 - angle);
+                                latitude -= Math.sin(radinas) * speed;
+                                longtitude -= Math.cos(radinas) * speed;
+                            } else if (angle >= 180 && angle < 270) {
+                                double radinas = Math.toRadians(angle - 180);
+                                latitude += Math.sin(radinas) * speed;
+                                longtitude -= Math.cos(radinas) * speed;
+                            } else {
+                                double radinas = Math.toRadians(360 - angle);
+                                latitude += Math.sin(radinas) * speed;
+                                longtitude += Math.cos(radinas) * speed;
+                            }
+                        } else {
+                            // 每走多少步后换方向
+                            if (count % loop == 0) {
+                                angle += 90;
+                                angle %= 360;
+                                if (angle == 270) {
+                                    loop += step;
+                                    count = 1;
+                                }
+                            }
+                            count += 1;
+                            if (angle == 0) {
+                                longtitude += patrolSpeed;
+                            } else if (angle == 90) {
+                                latitude -= patrolSpeed;
+                            } else if (angle == 180) {
+                                longtitude -= patrolSpeed;
+                            } else if (angle == 270) {
+                                latitude += patrolSpeed;
+                            }
+                        }
+                    }
+                    setLocation(longtitude, latitude);
+                }
+            }
+        };
+        fixedThreadPool.execute(runnable);
     }
 
     // 持续定位
